@@ -31,6 +31,7 @@ def anadir_opciones(o, container=False):
         # o.add_argument("--headless")
         # o.add_argument("--user-agent=Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.116 Mobile Safari/537.36")        
         
+        o.add_argument("--single-process")
         o.add_argument("--disable-dev-shm-usage")
         o.add_argument("--disable-gpu")
         o.add_argument("--window-size=393,851")
