@@ -6,7 +6,7 @@ import seleniumbase
 import os
 
 
-def anadir_opciones(o, container=False):
+def anadir_opciones(o, container=False, mobile=False):
     
     
     o.add_argument("--disable-web-security")
@@ -22,30 +22,34 @@ def anadir_opciones(o, container=False):
     o.add_argument("--disable-infobars")
     o.add_argument("--disable-blink-features=AutomationControlled")
     o.add_argument("--disable-features=ChromeWhatsNewUI")
+
+    o.add_argument("--single-process")
+    o.add_argument("--disable-dev-shm-usage")
+    o.add_argument("--disable-gpu")
+    o.add_argument("--window-size=393,851")
+    o.add_argument("--disable-extensions")
+    o.add_argument("--disable-application-cache")                
+    o.add_argument("--enable-javascript")                
+    o.add_argument("--disable-infobars")
     
-    o.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, como Gecko) Chrome/135.0.0.0 Safari/537.36")
     
         
     if container:
         o.add_argument("--headless=new")
-        # o.add_argument("--headless")
-        # o.add_argument("--user-agent=Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.116 Mobile Safari/537.36")        
-        
-        o.add_argument("--single-process")
-        o.add_argument("--disable-dev-shm-usage")
-        o.add_argument("--disable-gpu")
-        o.add_argument("--window-size=393,851")
-        o.add_argument("--disable-extensions")
-        o.add_argument("--disable-software-rasterizer")
-        o.add_argument("--disable-application-cache")                
-        o.add_argument("--enable-javascript")                
-        o.add_argument("--disable-infobars")
-        o.add_argument("--js-flags='--max-old-space-size=2048'")
 
-        o.add_argument("--disable-software-rasterizer")
-        o.add_argument("--use-gl=swiftshader")
-        o.add_argument("--disable-gpu-sandbox")
-        o.add_argument("--no-zygote")
+    if mobile:
+        # user-agent mobile
+        o.add_argument("--user-agent=Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.7151.116 Mobile Safari/537.36")        
+
+    else:
+        o.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, como Gecko) Chrome/135.0.0.0 Safari/537.36")
+        
+        
+
+        # o.add_argument("--disable-software-rasterizer")
+        # o.add_argument("--use-gl=swiftshader")
+        # o.add_argument("--disable-gpu-sandbox")
+        # o.add_argument("--no-zygote")
 
 
     prefers = {"profile.default_content_setting_values.notifications": 2,
@@ -105,7 +109,7 @@ def selenium_driver():
     return driver
 
 
-def uc_driver():
+def uc_driver(mobile=False):
 
     o = uc.ChromeOptions()
     
@@ -121,23 +125,37 @@ def uc_driver():
         }
     )
     
-    o = anadir_opciones(o, True)
     
-    driver = uc.Chrome(
-        use_subprocess=False,
-        options=o,
-        log_level=3,
-        keep_alive=True,
-        driver_executable_path='/usr/lib/chromium/chromedriver'
-        # driver_executable_path=r'C:\Users\Reima\AppData\Local\Programs\Python\Python312\Lib\site-packages\seleniumbase\drivers\chromedriver.exe'
-    )
+
     
     if os.name != "nt":
-        set_device_metrics_override = dict({"width": 375, "height": 812, "deviceScaleFactor": 50, "mobile": True})
-        driver.execute_cdp_cmd('Emulation.setDeviceMetricsOverride', set_device_metrics_override) 
-        
-    return driver
+        o = anadir_opciones(o, container=True , mobile=mobile)
 
+        driver = uc.Chrome(
+            use_subprocess=False,
+            options=o,
+            log_level=3,
+            keep_alive=True,
+            driver_executable_path='/usr/lib/chromium/chromedriver',
+            # driver_executable_path=r'C:\Users\Reima\AppData\Local\Programs\Python\Python312\Lib\site-packages\seleniumbase\drivers\chromedriver.exe'
+        )
+
+    else:
+        o = anadir_opciones(o, mobile=mobile)
+        driver = uc.Chrome(
+            options=o,
+            log_level=3,
+            keep_alive=True,
+            driver_executable_path=r'C:\Users\Reima\AppData\Local\Programs\Python\Python312\Lib\site-packages\seleniumbase\drivers\chromedriver.exe'
+        )
+    
+    
+    if mobile:
+        driver.set_window_rect(height=851, width=300)
+        driver.set_window_position(x=0, y=0)
+
+
+    return driver
 
 
 
