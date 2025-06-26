@@ -5,13 +5,38 @@ from f_src import bot_handlers
 import telebot
 import re
 from traceback import format_exc
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver import Chrome
 
 
 def give_error(bot, driver, user, texto):
     bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del Error")
     raise Exception(texto)
 
-def clear_doom(driver):
+def limpiar(driver: Chrome):
+    a = ActionChains(driver, 0)
+    """Limpia el cache periódicamente"""
+    driver.switch_to.new_window()
+    driver.get('chrome://settings/clearBrowserData')
+    ActionChains(driver, 0).send_keys(Keys.TAB, Keys.ENTER).perform()
+    time.sleep(2)  # Espera a que limpie
+    
+    driver.close()
+    
+    if len(driver.window_handles) > 1:
+        for tab in driver.window_handles:
+            if tab == driver.window_handles[0]:
+                continue
+                
+            driver.switch_to.window(tab)
+            driver.close()
+    
+    driver.switch_to.window(driver.window_handles[0])
+    return "ok"
+
+
+def clear_doom(driver: Chrome, hacer_limpieza=True):
     #https://stackoverflow.com/questions/73604732/selenium-webdriverexception-unknown-error-session-deleted-because-of-page-cras
     
     # driver.execute_script('document.body.innerHTML = ";"')
@@ -28,7 +53,10 @@ def clear_doom(driver):
     except:
         pass
     
-    return
+    if hacer_limpieza:
+        limpiar(driver)
+    
+    return "ok"
 
 def comprobar_BD(collection):
     try:
@@ -46,7 +74,7 @@ def comprobar_BD(collection):
 
 def info_message(texto, bot:telebot.TeleBot, temp_dict, user, markup = False):
     if not markup:
-        temp_dict[user]["info"] = bot.edit_message_text("🆕 Mensaje de Información\n\n{texto}".format(texto), chat_id=user, message_id=temp_dict[user]["info"].message_id)
+        temp_dict[user]["info"] = bot.edit_message_text("🆕 Mensaje de Información\n\n{}".format(texto), chat_id=user, message_id=temp_dict[user]["info"].message_id)
     
     else:
         temp_dict[user]["info"] = bot.edit_message_text("🆕 Mensaje de Información\n\n" + texto, chat_id=user, message_id=temp_dict[user]["info"].message_id, reply_markup=markup)
