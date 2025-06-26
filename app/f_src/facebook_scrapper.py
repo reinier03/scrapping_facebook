@@ -704,7 +704,7 @@ def publicacion(driver, bot:telebot.TeleBot, url, user, load_url=True, contador 
         else:
             driver.get(url)
                 
-        clear_doom(driver)
+        
         time.sleep(5)
     
     if not kwargs.get("temp_dic"):
@@ -950,7 +950,7 @@ def publicacion(driver, bot:telebot.TeleBot, url, user, load_url=True, contador 
 def elegir_cuenta(driver, user, bot ,ver_actual=False):
     global temp_dict
     print("estoy dentro de la funcion de elegir la cuenta")
-    clear_doom(driver)
+    
     
     try:
         #si ya el menú de cuentas está desplegado... hay que omitir cosas
@@ -1024,7 +1024,7 @@ def elegir_cuenta(driver, user, bot ,ver_actual=False):
             print("cuenta elegida!")
             wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
             guardar_cookies(driver, user)
-            clear_doom(driver)
+            
 
             return ("ok", temp_dict[user]["perfiles"][temp_dict[user]["res"]])
             
