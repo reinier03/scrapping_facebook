@@ -37,7 +37,7 @@ driver = uc_driver()
 
 
     
-wait = WebDriverWait(driver, 80)
+wait = WebDriverWait(driver, 20)
 cliente = MongoClient(MONGO_URL)
 db = cliente["face"]
 collection = db["usuarios"]
@@ -54,7 +54,7 @@ wait_s = WebDriverWait(driver, 8)
 
 
     
-def esperar(etiqueta, elementos, intentos=16):
+def esperar(etiqueta, elementos, intentos=6):
     '''
     Esta funcion se asegura de que los elementos están disponibles en el DOM
     si no se cumplen las condiciones, se espera 5 segundos y se vuelve a intentar
@@ -62,7 +62,7 @@ def esperar(etiqueta, elementos, intentos=16):
     contador = 1
     while True:
         try:
-            e = wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, etiqueta)) == elementos + 1))
+            e = wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, etiqueta)) >= elementos + 1))
             
         except IndexError:
             if contador >= intentos:
@@ -699,7 +699,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                 
         
         time.sleep(5)
-        print("cargué el enlace proporcionado: {}".format(url))
+        print("Cargué el enlace proporcionado: {}".format(url))
     
 
     clear_doom(driver, False)

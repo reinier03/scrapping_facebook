@@ -119,9 +119,10 @@ def uc_driver():
     o = anadir_opciones(o, True)
     
     driver = uc.Chrome(
-        use_subprocess=True,
+        use_subprocess=False,
         options=o,
         log_level=3,
+        keep_alive=True
         driver_executable_path='/usr/lib/chromium/chromedriver'
         # driver_executable_path=r'C:\Users\Reima\AppData\Local\Programs\Python\Python312\Lib\site-packages\seleniumbase\drivers\chromedriver.exe'
     )
