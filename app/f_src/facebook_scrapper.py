@@ -701,8 +701,6 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         time.sleep(5)
         print("Cargué el enlace proporcionado: {}".format(url))
     
-
-    clear_doom(driver, False)
     
     if not kwargs.get("temp_dic"):
         temp_dict[user]["publicacion"] = {"publicados" : [], "error" : []}
@@ -738,6 +736,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         
             if temp_dict[user]["res"][0] == "error":
                 give_error(bot, driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"]))
+                
                 return
         
             else:
