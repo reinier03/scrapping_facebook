@@ -701,8 +701,8 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         time.sleep(5)
         print("cargué el enlace proporcionado: {}".format(url))
     
-    print("Limpiaré el DOOM")
-    clear_doom(driver)
+
+    clear_doom(driver, False)
     
     if not kwargs.get("temp_dic"):
         temp_dict[user]["publicacion"] = {"publicados" : [], "error" : []}
