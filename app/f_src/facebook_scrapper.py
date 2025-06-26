@@ -10,6 +10,7 @@ import random
 import re
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove, ForceReply
+from selenium.webdriver import Chrome
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.by import By
@@ -668,7 +669,7 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
         return loguin_cero(driver, user, bot)
         
         
-def publicacion(driver, bot:telebot.TeleBot, url, user, load_url=True, contador = 0, **kwargs):
+def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, contador = 0, **kwargs):
     global temp_dict
     
     # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nEstoy accediendo a la publicación del enlace que me proporcionaste...", chat_id=user, message_id=temp_dict[user]["info"].message_id)    
@@ -679,14 +680,6 @@ def publicacion(driver, bot:telebot.TeleBot, url, user, load_url=True, contador 
     temp_dict[user]["a"] = ActionChains(driver, duration=0)
     
     if load_url:
-        
-        if tempfile.gettempdir():
-            for i in os.walk(tempfile.gettempdir()):
-                try:
-                    print("Borré: " + str(i[0]))
-                    shutil.rmtree(i[0])
-                except:
-                    pass
         
         if os.name == "nt":
             try:
@@ -706,6 +699,10 @@ def publicacion(driver, bot:telebot.TeleBot, url, user, load_url=True, contador 
                 
         
         time.sleep(5)
+        print("cargué el enlace proporcionado: {}".format(url))
+    
+    print("Limpiaré el DOOM")
+    clear_doom(driver)
     
     if not kwargs.get("temp_dic"):
         temp_dict[user]["publicacion"] = {"publicados" : [], "error" : []}
@@ -730,7 +727,7 @@ def publicacion(driver, bot:telebot.TeleBot, url, user, load_url=True, contador 
                     raise Exception("Facebook me bloqueó?")
                 
             #esperar el botón de compartir
-                
+            print("Buscaré el boton de compartir")
             temp_dict[user]["res"] = wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'span[data-ad-rendering-role="share_button"]')))
             
             if len(temp_dict[user]["res"]) == 1:
@@ -750,6 +747,7 @@ def publicacion(driver, bot:telebot.TeleBot, url, user, load_url=True, contador 
             #click en el boton de compartir en la publicacion
             time.sleep(5)
             temp_dict[user]["res"].click()
+            print("Le he dado click en el botón Compartir")
             
 
             #comprobar si ya existe el elemento de grupos en el DOM
@@ -766,9 +764,11 @@ def publicacion(driver, bot:telebot.TeleBot, url, user, load_url=True, contador 
             #click en compartir en grupos
             # time.sleep(2)
             temp_dict[user]["res"][1].find_elements(By.CSS_SELECTOR, 'i[class="x1b0d499 xep6ejk"]')[4].click()
+            print("Click en Compartir Grupos")
 
             #esperar lista de grupos
             try:
+                print("Esperando lista de grupos visibles")
                 wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')))
                 break
                 
@@ -783,6 +783,7 @@ def publicacion(driver, bot:telebot.TeleBot, url, user, load_url=True, contador 
 
 
         #obtener grupos
+        print("Obteniendo grupos")
         temp_dict[user]["lista_grupos"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')
         
         if not temp_dict[user]["lista_grupos"] or len(temp_dict[user]["lista_grupos"]) < contador:
