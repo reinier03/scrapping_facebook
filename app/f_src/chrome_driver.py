@@ -42,6 +42,11 @@ def anadir_opciones(o, container=False):
         o.add_argument("--disable-infobars")
         o.add_argument("--js-flags='--max-old-space-size=2048'")
 
+        options.add_argument("--disable-software-rasterizer")
+        options.add_argument("--use-gl=swiftshader")
+        options.add_argument("--disable-gpu-sandbox")
+        options.add_argument("--no-zygote")
+
 
     prefers = {"profile.default_content_setting_values.notifications": 2,
             "intl.accept_languages": ["es-ES", "es"],
