@@ -25,7 +25,7 @@ webhook_url = Si esta variable es definida se usará el metodo webhook, sino pue
 """
 
 
-dict_temp = {}
+temp_dict = {}
 cola = {}
 cola["cola"] = []
 cola["uso"] = False
@@ -45,7 +45,7 @@ collection = db["usuarios"]
 
 telebot.apihelper.ENABLE_MIDDLEWARE = True
 
-bot = telebot.TeleBot(os.environ["token"], "html",)
+bot = telebot.TeleBot(os.environ["token2"], "html")
 
 bot.set_my_commands([
     BotCommand("/start", "Información sobre el bot"),
@@ -53,6 +53,7 @@ bot.set_my_commands([
 ])
 
 bot.send_message(os.environ["admin"], "El bot de publicaciones de Facebook está listo :)")
+
 
 
 
@@ -81,8 +82,9 @@ Bot desarrollado por @mistakedelalaif, las dudas o quejas, ir a consultárselas 
 
 @bot.message_handler(commands=["cookies"])
 def cmd_cookies(m):
-    msg = bot.send_message(m.chat.id, "A continuación envia el archivo cookies.pkl al que tienes acceso")
-    bot.register_next_step_handler(msg, capturar_archivo)
+    temp_dict[m.from_user.id] = {}
+    temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, "A continuación envia el archivo cookies.pkl al que tienes acceso")
+    bot.register_next_step_handler(temp_dict[m.from_user.id]["msg"], capturar_archivo)
     
     
 def capturar_archivo(m):
@@ -127,19 +129,20 @@ def cmd_publish(m):
 Ahora enviame el enlace de la publicación
 """)
     
-    msg = bot.send_message(m.chat.id, texto, reply_markup=telebot.types.ReplyKeyboardMarkup(True, True).add("Cancelar"))
-    bot.register_next_step_handler(msg, get_url, texto)
+    temp_dict[m.from_user.id] = {}
+    temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, texto, reply_markup=telebot.types.ReplyKeyboardMarkup(True, True).add("Cancelar"))
+    bot.register_next_step_handler(temp_dict[m.from_user.id]["msg"], get_url, texto)
     
     
 def get_url(m, texto):
     global cola
     
     if m.text.lower() == "cancelar":
-        bot.send_message(m.chat.id, "Muy bien, operación cancelada exitosamente :)")
+        bot.send_message(m.chat.id, "Muy bien, operación cancelada exitosamente :)", reply_markup=telebot.types.ReplyKeyboardRemove())
         return
 
     if cola["uso"]:
-        bot.send_message(m.chat.id ,"Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible")
+        bot.send_message(m.chat.id ,"Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible", reply_markup=telebot.types.ReplyKeyboardRemove())
         
         if not m.from_user.id in cola["cola"]:
             cola["cola"].append(m.from_user.id)
@@ -148,9 +151,10 @@ def get_url(m, texto):
     
     
     if not m.text.lower().startswith("https://www.facebook.com"):
-        msg = bot.send_message(m.chat.id, f"Este enlace no es de Facebook! Inténtalo de nuevo...\n\n{texto}")
+        temp_dict[m.from_user.id] = {}
+        temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, f"Este enlace no es de Facebook! Inténtalo de nuevo...\n\n{texto}")
         
-        return bot.register_next_step_handler(msg, get_url, texto)
+        return bot.register_next_step_handler(temp_dict[m.from_user.id]["msg"], get_url, texto)
     
     
     try:
@@ -163,11 +167,15 @@ def get_url(m, texto):
             
         except Exception as e:
             print("Ha ocurrido un error! Revisa el bot, te dará más detalles")
-            if "no" == str(e.args).lower():
-                pass
-            
+            if isinstance(e, tuple):
+                if "no" == str(e.args).lower():
+                    pass
+                
+                else:
+                    bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(e.args[0]) + "</blockquote>")
+
             else:
-                bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(e.args[0]) + "</blockquote>")
+                bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(e.args) + "</blockquote>")
         
         
             

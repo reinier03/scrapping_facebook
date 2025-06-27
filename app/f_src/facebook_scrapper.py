@@ -455,31 +455,37 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
         global temp_dict
         # e = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
         try:
-            temp_dict[user]["e"] = wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, "span.xuxw1ft")))
-            temp_dict[user]["e"].click()
+            wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4))
+
+            #elemento de 'Usar otro metodo' para elegir los codigos de seguridad
+            driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[3].click()
+
         except:
-            make_screenshoot(driver, user)
-            return ("error", "ID usuario: " + str(user) + "\n\nNo se ha podido dar click en el botón de doble autenticación")
+            give_error(bot, driver, user, "ID usuario: " + str(user) + "\n\nNo se ha podido dar click en el botón de doble autenticación")
         
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "div.x1nn3v0j")))
+        wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
         
-        #aqui le doy click a el metodo de auth que en este caso sería por codigo de verificacion
-        wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, "input.xh8yej3")))
-        driver.find_elements(By.CSS_SELECTOR, "input.xh8yej3")[-1].click()
+        
+        wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
+
+        #aqui le doy click a el metodo de auth que en este caso sería por codigo de respaldo
+        driver.find_elements(By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')[3].click()
+
         #le doy click a continuar
+        driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"][tabindex="0"]')[1].click()
 
-        driver.find_elements(By.CSS_SELECTOR, "span.xuxw1ft")[-1].click()
         #el siguiente elemento es el input en el que va el código
+        wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'input[inputmode="numeric"]')))
         
-        temp_dict[user]["e"] = wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, "input.xha3pab")))
-        temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, "input.xha3pab")
-
+        temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, 'input[inputmode="numeric"]')
         
         
-            
         handlers(bot, user, "A continuación, introduce uno de los códigos de respaldo de Facebook\n\n(Estos códigos son de 8 dígitos numéricos y puedes obtenerlos en el centro de cuentas en los ajustes de tu cuenta de Facebook)" , "codigo_respaldo", temp_dict, markup=ForceReply())
         
-        
+        #para borrar los espacios en el codigo de respaldo
+        if re.search(r"\D", temp_dict[user]["res"].text):
+            temp_dict[user]["res"].text = temp_dict[user]["res"].text.replace(re.search(r"\D+", temp_dict[user]["res"].text).group(), "")
+
         for i in temp_dict[user]["res"].text:
             temp_dict[user]["e"].send_keys(i)
             time.sleep(0.5)
@@ -488,28 +494,28 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
         print("he ingresado los códigos")
         temp_dict[user]["url_actual"] = driver.current_url
         
+
         #click en el boton de continuar
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[class="xod5an3 xg87l8a"]'))).find_element(By.CSS_SELECTOR, 'span[class="x1lliihq x193iq5w x6ikm8r x10wlt62 xlyipyv xuxw1ft"]').click()
+        driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[4].click()
         print("click en el boton de continuar")
         
         
         
         try:
             #este mensaje se muestra cuando el código es incorrecto
-            if wait_s.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'span[class="x1lliihq x1plvlek xryxfnj x1n2onr6 x1ji0vk5 x18bv5gf x193iq5w xeuugli x1fj9vlw x13faqbe x1vvkbs x1s928wv xhkezso x1gmr53x x1cpjm7i x1fgarty x1943h6x xnk8lw1 xuarlqh xuemr51 x1ff8u0n x1a1m0xk x1yc453h xtoi2st x676frb"]'))):
-                bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
+            if wait_s.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')) > 8)):
+                bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto!\n\nEspera un momento para volver a intentarlo...")
                 
-                driver.refresh()
-                return doble_auth(driver, user, bot)
+                return loguin_cero(driver, user, bot)
                 
         except:
             pass
         
-        #esperar a que no esté el botón
-        wait.until(ec.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="xod5an3 xg87l8a"]')))
+        # #esperar a que no esté el botón
+        # wait.until(ec.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="xod5an3 xg87l8a"]')))
            
         try:
-            print("cambiar la url a la de remember_browser")
+            print("cambiar la url a la de save-device")
             wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
             print("ha cambiado!")
 
@@ -517,8 +523,8 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
             pass
         
         
-        
-        if not "remember_browser" in driver.current_url:
+        #sustituto de remember_browser
+        if not "save-device" in driver.current_url:
             
             # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!", chat_id=user, message_id=temp_dict[user]["info"].message_id)  
             
@@ -531,8 +537,8 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
 
         
         #click en confiar en este dispositivo
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'span[class="x1lliihq x193iq5w x6ikm8r x10wlt62 xlyipyv xuxw1ft"]')))
-        driver.find_element(By.CSS_SELECTOR, 'span[class="x1lliihq x193iq5w x6ikm8r x10wlt62 xlyipyv xuxw1ft"]').click()
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
+        driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
 
         # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto", chat_id=user, message_id=temp_dict[user]["info"].message_id)     
         
@@ -553,92 +559,65 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
     e = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
     
     #-----------------obtener usuario para loguin---------------
-    e = wait.until(ec.visibility_of_element_located((By.ID, "email")))
+    e = wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
     
     #cambiar
-    handlers(bot, user, "Introduce a continuación tu <b>Correo</b> o <b>Número de Teléfono</b> (agregando el código de tu país por delante ej: +53, +01, +52, etc) con el que te autenticas en Facebook: ", "user", temp_dict)
+    if not dic_temp[user]["user"]:
+        handlers(bot, user, "Introduce a continuación tu <b>Correo</b> o <b>Número de Teléfono</b> (agregando el código de tu país por delante ej: +53, +01, +52, etc) con el que te autenticas en Facebook: ", "user", temp_dict)
 
 
     e.send_keys(temp_dict[user]["user"])
     
     
     #-----------------obtener password para loguin---------------
-    e = wait.until(ec.visibility_of_element_located((By.ID, "pass")))
+    e = wait.until(ec.visibility_of_element_located((By.ID, "m_login_password")))
     
-
-    handlers(bot, user, "Introduce a continuación la contraseña", "password", temp_dict)
+    if not dic_temp[user]["password"]:
+        handlers(bot, user, "Introduce a continuación la contraseña", "password", temp_dict)
     
     
     temp_dict[user]["url_actual"] = driver.current_url
     
     e.send_keys(temp_dict[user]["password"])
     
-    e = wait.until(ec.visibility_of_element_located((By.NAME, "login")))
+    e = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-anchor-id="replay"]')))
     e.click()
     try:
         wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
         wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
     except:
-        print("no cambio?")
+        pass
     
-    
-    captcha(driver, user, bot)
+
 
     
     
     try:
         #cuando no introduces bien ninguno de tus datos:
-        if driver.find_element(By.CSS_SELECTOR, 'div[class="_9ay7"]'):
-            # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nAl parecer los datos que me has enviado son incorrectos\nEl mensaje que me ha mostrado Facebook al intentar usar los datos que me proporcionaste fué el siguiente:\n\n<blockquote>{driver.find_element(By.CSS_SELECTOR, 'div[class="_9ay7"]').text}</blockquote>\n\nPor favor ingrese nuevamente correctamente sus datos", chat_id=user, message_id=temp_dict[user]["info"].message_id) 
+        if driver.find_element(By.CSS_SELECTOR, 'div[class="wbloks_73"]'):
             
-            bot.send_message(user, "🆕 Mensaje de Información\n\nAl parecer los datos que me has enviado son incorrectos\nEl mensaje que me ha mostrado Facebook al intentar usar los datos que me proporcionaste fué el siguiente:\n\n<blockquote>" + str(driver.find_element(By.CSS_SELECTOR, 'div[class="_9ay7"]').text) + "</blockquote>\n\nPor favor ingrese nuevamente correctamente sus datos")
+            bot.send_photo(user, telebot.type.InputFile(make_screenshoot(driver, user)), "Al parecer los datos que me has enviado son incorrectos\nTe he enviado una captura de lo que me muestra Facebook\n\nPor favor ingrese <b>correctamente</b> sus datos otra vez...")
             del temp_dict[user]
-            loguin_cero(driver, user, bot)
+            return loguin_cero(driver, user, bot)
             
     except:
         pass
-    
-    try:
-        #cuando no introduces bien la contraseña:
-        if driver.find_element(By.CSS_SELECTOR, 'div[class="pam uiBoxGray"]'):
-            
-            # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nAl parecer no has introducido adecuadamente tus credenciales\nEl mensaje que me ha mostrado Facebook al intentar usar los datos que me proporcionaste fué el siguiente:\n\n<blockquote>{driver.find_element(By.CSS_SELECTOR, 'div[class="pam uiBoxGray"]').text}</blockquote>\n\nPor favor ingrese nuevamente correctamente sus datos", chat_id=user, message_id=temp_dict[user]["info"].message_id) 
-            
-            bot.send_message(user, "🆕 Mensaje de Información\n\nAl parecer no has introducido adecuadamente tus credenciales\nEl mensaje que me ha mostrado Facebook al intentar usar los datos que me proporcionaste fué el siguiente:\n\n<blockquote>" + str(driver.find_element(By.CSS_SELECTOR, 'div[class="pam uiBoxGray"]').text) + "</blockquote>\n\nPor favor ingrese nuevamente correctamente sus datos")
-            
-            del temp_dict[user]
-            loguin_cero(driver, user, bot)
-        
-    
-    except:
-        pass
-    
-    try:
-        #cuando la contraseña que ingresaste era antigua
-        if driver.find_element(By.CSS_SELECTOR, 'div#error_box'):
-            
-            # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nAl parecer no has introducido adecuadamente tus credenciales\nEl mensaje que me ha mostrado Facebook al intentar usar los datos que me proporcionaste fué el siguiente:\n\n<blockquote>{driver.find_element(By.CSS_SELECTOR, 'div[class="pam uiBoxGray"]').text}</blockquote>\n\nPor favor ingrese nuevamente correctamente sus datos", chat_id=user, message_id=temp_dict[user]["info"].message_id) 
-            
-            bot.send_message(user, "🆕 Mensaje de Información\n\nAl parecer no has introducido adecuadamente tus credenciales\nEl mensaje que me ha mostrado Facebook al intentar usar los datos que me proporcionaste fué el siguiente:\n\n<blockquote>" + driver.find_element(By.CSS_SELECTOR, 'div[class="pam uiBoxGray"]').text + "</blockquote>\n\nPor favor ingrese nuevamente correctamente sus datos")
-            
-            del temp_dict[user]
-            loguin_cero(driver, user, bot)
-    except:
-        pass
-    
-    if "two_step_verification" in driver.current_url:
+
+    print("Tendrá doble auth?")
+    if driver.current_url.endswith("#"):
+        print("Si, si tiene")
         temp_dict[user]["res"] = doble_auth(driver, user, bot)
         if "No se ha podido dar click en el botón de doble autenticación" in temp_dict[user]["res"][-1]:
                         
             temp_dict[user]["res"] = captcha(driver, user, bot)
             if temp_dict[user]["res"][0] == "error":
-                return temp_dict[user]["res"]
+                raise Exception(temp_dict[user]["res"][1])
             
             if "two_factor" in driver.current_url:
                 #doble auntenticación
                 temp_dict[user]["res"] = doble_auth(driver, user, bot)
                 if temp_dict[user]["res"][0] == "error":
-                    return temp_dict[user]["res"]
+                    raise Exception(temp_dict[user]["res"][1])
                 
         else:
             pass
@@ -646,9 +625,11 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
             
     
     try:
+        
+        print("Pues no, no tiene")
         print("Voy a esperar a que salga la main page de facebook")
-        if wait.until(ec.all_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'svg[class="x3ajldb"]') and not "remember_browser" in driver.current_url)):
-        # wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
+        # if wait.until(ec.all_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[role=button][data-mcomponent="MContainer"][data-action-id="32746"]') and not "save-device" in driver.current_url)):
+        if wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')) >= 3 and not "save-device" in driver.current_url)):
             
             guardar_cookies(driver, user, loguin={"user": temp_dict[user]["user"], "password": temp_dict[user]["password"]})
 
@@ -656,17 +637,16 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
             
             return ("ok", "loguin desde cero satisfactorio :)")
         
-        else:    
-            # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo", chat_id=user, message_id=temp_dict[user]["info"].message_id) 
-            
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)) , "🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo")
-
-            return loguin_cero(driver, user, bot) 
         
     except Exception as e:
         # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo", chat_id=user, message_id=temp_dict[user]["info"].message_id) 
+
+        temp_dict[user]["res"] = make_screenshoot(driver, user)
         
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)) , "🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo")
+        bot.send_photo(user, telebot.types.InputFile(temp_dict[user]["res"]) , "🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo")
+
+        del temp_dict[user]
+
         return loguin_cero(driver, user, bot)
         
         
@@ -968,7 +948,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                   
                 
 
-def elegir_cuenta(driver, user, bot ,ver_actual=False):
+def elegir_cuenta(driver, user, bot , ver_actual=False):
     global temp_dict
     print("estoy dentro de la funcion de elegir la cuenta")
     
@@ -987,9 +967,9 @@ def elegir_cuenta(driver, user, bot ,ver_actual=False):
         print("Voy a esperar a que salga el menu de cuentas")
 
         #este elemento es el de los ajustes del perfil (las 3 rayas de la derecha superior)
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role=button][data-mcomponent="MContainer"][data-action-id="32746"]')))
+        temp_dict[user]["res"] = esperar('div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]', 2)
 
-        driver.find_element(By.CSS_SELECTOR, 'div[role=button][data-mcomponent="MContainer"][data-action-id="32746"]').click()
+        temp_dict[user]["res"][1].click()
 
         #Elemento de Configuracion de cuenta
         wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="list"]')))
@@ -999,9 +979,15 @@ def elegir_cuenta(driver, user, bot ,ver_actual=False):
 
 
         try:
-            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="button"][data-action-id="32745"]')))
+            
+            temp_dict[user]["res"] = esperar('div[role="button"][data-action-id="32745"]', 0)
 
-            driver.find_element(By.CSS_SELECTOR, 'div[role="button"][data-action-id="32745"]').click()
+            if temp_dict[user]["res"][0].lower() == "error":
+
+                temp_dict[user]["res"] = esperar('div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"]', 4)
+
+
+            temp_dict[user]["res"][1].click()
             
             temp_dict[user]["res"] = ("ok", "han salido")
             print("Click en ver todos los perfiles")
@@ -1100,7 +1086,7 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
     
     comprobar_BD(collection)
     
-    temp_dict[user]["info"] = bot.send_message(user, "🆕 Mensaje de Información\n\nTe estaré informando acerca de la operación con este mensaje :)")
+    temp_dict[user]["info"] = bot.send_message(user, "🆕 Mensaje de Información\n\nTe estaré informando acerca de la operación con este mensaje :)", reply_markup=telebot.types.ReplyKeyboardRemove())
 
     try:
 
