@@ -743,9 +743,11 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
                 
                 try:
+
+                    temp_dict[user]["url_actual"] = driver.current_url
+
                     #elemento de los grupos
                     # wait.until(ec.any_of(lambda driver: driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]))
-
                     wait.until(ec.all_of(
                         lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
                         lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
@@ -757,7 +759,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
             #click en compartir en grupos
             driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5].click()
-            temp_dict[user]["url_actual"] = driver.current_url
+
 
             try:
                 wait.until(ec.any_of(lambda driver: not driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5].click()))
@@ -780,8 +782,12 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
                 raise err
 
+        try:
+            print("Url actual a cambiar: {}".format(driver.current_url))
+            wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
 
-        wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
+        except:
+            pass
 
         #obtener grupos
         print("Obteniendo grupos")
@@ -900,7 +906,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, "Lista de Grupos en los que se ha Publicado:\n\n")
         try:
             #esperaré x segundos para ver si desaparece la ventana para publicar
-            wait_s.until(ec.any_of(lambda driver: not driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
+            WebDriverWait(driver, 5).until(ec.any_of(lambda driver: not driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
             
             temp_dict[user]["publicacion"]["error"].append(temp_dict[user]["publicacion"]["nombre"])
             temp_dict[user]["res"] = obtener_texto(temp_dict, True)
