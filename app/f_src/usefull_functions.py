@@ -91,7 +91,9 @@ def main_folder():
             return os.path.dirname(os.path.abspath(__file__))
         
     else:
-        return os.path.dirname(sys.argv[0])
+        return os.getcwd()
+            
+
 
 def user_folder(user):
     user = str(user)

@@ -135,7 +135,7 @@ def get_url(m, texto):
     global cola
     
     if cola["uso"]:
-        bot.send_message("Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible")
+        bot.send_message(m.chat.id ,"Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible")
         
         if not m.from_user.id in cola["cola"]:
             cola["cola"].append(m.from_user.id)
@@ -186,7 +186,6 @@ def get_url(m, texto):
                 
             except:
                 try:
-                    bot.get_my_commands()
                     bot.send_message(m.chat.id, "Ha ocurrido un error fatal")
                 except:
                     print("ERROR FATAL:\nHe perdido la conexion a telegram :(")
