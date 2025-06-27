@@ -797,7 +797,6 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         #si ya recorrimos todos los elementos de la lista...
         while len(temp_dict[user]["lista_grupos"]) < contador + 1:
 
-            breakpoint()
             #apuntando el cursor encima de los grupos
             temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
             
@@ -819,7 +818,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             
 
             if len(temp_dict[user]["lista_grupos"]) == len(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')):
-                breakpoint()
+                
                 bot.unpin_chat_message(temp_dict[user]["info"].chat.id, temp_dict[user]["info"].message_id)
                 
                 return ("ok", "Se ha publicado exitosamente en " + str(len(temp_dict[user]["publicacion"]["publicados"])) + " grupo(s)")
@@ -845,17 +844,15 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         temp_dict[user]["publicacion"]["nombre"] = temp_dict[user]["lista_grupos"][contador].text
         # time.sleep(2)
 
-        try:
-            time.sleep(3)
-            temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
 
-            wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')[1].text))
+        time.sleep(3)
+        temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
 
-            temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
+        wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')[1].text))
 
-            temp_dict[user]["lista_grupos"][contador].click()
-        except:
-            breakpoint()
+        temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
+
+        temp_dict[user]["lista_grupos"][contador].click()
 
         
         def obtener_texto(temp_dict, error: bool):
