@@ -771,7 +771,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                 print("Esperando lista de grupos visibles")
 
                 #elemento padre de los grupos
-                wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
+                # wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
                 break
                 
             except Exception as err:

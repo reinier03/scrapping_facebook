@@ -36,6 +36,8 @@ def anadir_opciones(o, container=False, mobile=False):
         
     if container:
         o.add_argument("--headless=new")
+        o.add_argument("--disable-dev-shm-usage")
+        o.add_argument("--disable-gpu")
 
     if mobile:
         # user-agent mobile
@@ -132,6 +134,7 @@ def uc_driver(mobile=False):
         o = anadir_opciones(o, container=True , mobile=mobile)
 
         driver = uc.Chrome(
+            use_subprocess=False,
             options=o,
             log_level=3,
             keep_alive=True,
@@ -150,7 +153,7 @@ def uc_driver(mobile=False):
     
     
     if mobile:
-        driver.set_window_rect(height=851, width=300)
+        driver.set_window_rect(height=851, width=450)
         driver.set_window_position(x=0, y=0)
 
 
