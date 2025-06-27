@@ -45,7 +45,7 @@ collection = db["usuarios"]
 
 telebot.apihelper.ENABLE_MIDDLEWARE = True
 
-bot = telebot.TeleBot(os.environ["token2"], "html")
+bot = telebot.TeleBot(os.environ["token"], "html")
 
 bot.set_my_commands([
     BotCommand("/start", "Información sobre el bot"),
