@@ -554,7 +554,23 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
     
     
     if load_url:
-        driver.get("https://facebook.com")
+
+        if os.name == "nt":
+            try:
+                driver.get("https://facebook.com")
+            except:
+                pass
+            
+            while True:
+                
+                try:
+                    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+                    break
+                except:
+                    pass
+                
+        else:
+            driver.get("https://facebook.com")
     
     e = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
     
@@ -562,7 +578,7 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
     e = wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
     
     #cambiar
-    if not dic_temp[user]["user"]:
+    if not temp_dict[user].get("user"):
         handlers(bot, user, "Introduce a continuación tu <b>Correo</b> o <b>Número de Teléfono</b> (agregando el código de tu país por delante ej: +53, +01, +52, etc) con el que te autenticas en Facebook: ", "user", temp_dict)
 
 
@@ -572,7 +588,7 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
     #-----------------obtener password para loguin---------------
     e = wait.until(ec.visibility_of_element_located((By.ID, "m_login_password")))
     
-    if not dic_temp[user]["password"]:
+    if not temp_dict[user].get("password"):
         handlers(bot, user, "Introduce a continuación la contraseña", "password", temp_dict)
     
     
@@ -727,9 +743,10 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                     temp_dict[user]["url_actual"] = driver.current_url
 
                     #elemento de los grupos
-                    # wait.until(ec.any_of(lambda driver: driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]))
+
                     wait.until(ec.all_of(
                         lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
+
                         lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
                     
                     break
@@ -738,11 +755,13 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                     pass
 
             #click en compartir en grupos
-            driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5].click()
+            temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
 
+            
+            temp_dict[user]["e"].click()
 
             try:
-                wait.until(ec.any_of(lambda driver: not driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5].click()))
+                WebDriverWait(driver, 5).until(ec.invisibility_of_element_located(temp_dict[user]["e"]))
             except:
                 pass
             
@@ -884,30 +903,15 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             bot.pin_chat_message(user, temp_dict[user]["info"].message_id, True)
             
             temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, "Lista de Grupos en los que se ha Publicado:\n\n")
-        try:
-            #esperaré x segundos para ver si desaparece la ventana para publicar
-            WebDriverWait(driver, 5).until(ec.any_of(lambda driver: not driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
-            
-            temp_dict[user]["publicacion"]["error"].append(temp_dict[user]["publicacion"]["nombre"])
-            temp_dict[user]["res"] = obtener_texto(temp_dict, True)
-            
-            if temp_dict[user]["res"][0] == "nuevo":
-                temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, temp_dict[user]["res"][0])
-                
-            else:
-                temp_dict[user]["publicacion"]["msg_publicacion"] = bot.edit_message_text(temp_dict[user]["res"][1] , user, temp_dict[user]["publicacion"]["msg_publicacion"].message_id)
-            
-            return publicacion(driver, url, user,load_url=False, contador=contador + 1, info_publicacion=temp_dict[user]["publicacion"])
         
-        except:
-            #si la ventana se mantiene...
-            temp_dict[user]["publicacion"]["publicados"].append(temp_dict[user]["publicacion"]["nombre"])
-            temp_dict[user]["res"] = obtener_texto(temp_dict, False)
-            
-            if temp_dict[user]["res"][0] == "nuevo":
-                temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, temp_dict[user]["res"][1])
-            else:
-                temp_dict[user]["publicacion"]["msg_publicacion"] = bot.edit_message_text(temp_dict[user]["res"][1] , user, temp_dict[user]["publicacion"]["msg_publicacion"].message_id)
+        #si la ventana se mantiene...
+        temp_dict[user]["publicacion"]["publicados"].append(temp_dict[user]["publicacion"]["nombre"])
+        temp_dict[user]["res"] = obtener_texto(temp_dict, False)
+        
+        if temp_dict[user]["res"][0] == "nuevo":
+            temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, temp_dict[user]["res"][1])
+        else:
+            temp_dict[user]["publicacion"]["msg_publicacion"] = bot.edit_message_text(temp_dict[user]["res"][1] , user, temp_dict[user]["publicacion"]["msg_publicacion"].message_id)
             
             
             

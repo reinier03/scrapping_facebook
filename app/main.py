@@ -167,7 +167,7 @@ def get_url(m, texto):
             
         except Exception as e:
             print("Ha ocurrido un error! Revisa el bot, te dará más detalles")
-            if isinstance(e, tuple):
+            if isinstance(e.args, tuple):
                 if "no" == str(e.args).lower():
                     pass
                 
