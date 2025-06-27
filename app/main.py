@@ -25,7 +25,7 @@ webhook_url = Si esta variable es definida se usará el metodo webhook, sino pue
 """
 
 
-
+dict_temp = {}
 cola = {}
 cola["cola"] = []
 cola["uso"] = False
@@ -127,13 +127,17 @@ def cmd_publish(m):
 Ahora enviame el enlace de la publicación
 """)
     
-    msg = bot.send_message(m.chat.id, texto, reply_markup=telebot.types.ForceReply())
+    msg = bot.send_message(m.chat.id, texto, reply_markup=telebot.types.ReplyKeyboardMarkup(True, True).add("Cancelar"))
     bot.register_next_step_handler(msg, get_url, texto)
     
     
 def get_url(m, texto):
     global cola
     
+    if m.text.lower() == "cancelar":
+        bot.send_message(m.chat.id, "Muy bien, operación cancelada exitosamente :)")
+        return
+
     if cola["uso"]:
         bot.send_message(m.chat.id ,"Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible")
         
