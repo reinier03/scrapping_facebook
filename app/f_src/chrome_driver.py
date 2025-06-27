@@ -26,11 +26,11 @@ def anadir_opciones(o, container=False, mobile=False):
     o.add_argument("--single-process")
     o.add_argument("--disable-dev-shm-usage")
     o.add_argument("--disable-gpu")
-    o.add_argument("--window-size=393,851")
-    o.add_argument("--disable-extensions")
-    o.add_argument("--disable-application-cache")                
-    o.add_argument("--enable-javascript")                
-    o.add_argument("--disable-infobars")
+    # o.add_argument("--window-size=393,851")
+    # o.add_argument("--disable-extensions")
+    # o.add_argument("--disable-application-cache")                
+    # o.add_argument("--enable-javascript")                
+    # o.add_argument("--disable-infobars")
     
     
         
@@ -159,8 +159,3 @@ def uc_driver(mobile=False):
 
 
 
-
-d = uc_driver(True)
-
-
-breakpoint()

@@ -718,7 +718,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             if contador != 0:
                 #aqui compruebo que la ventana de compartir ya no esté interrumpiendo
                 try:
-                    wait.until(ec.invisibility_of_element((By.CSS_SELECTOR, 'div[class="x1l90r2v xyamay9 x1n2onr6"]')))
+                    wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
                     
                 except:
                     bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura Error")
@@ -726,74 +726,38 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                 
             #esperar el botón de compartir
             print("Buscaré el boton de compartir")
-            temp_dict[user]["res"] = wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'span[data-ad-rendering-role="share_button"]')))
+            temp_dict[user]["res"] = wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
             
-            if len(temp_dict[user]["res"]) == 1:
-                temp_dict[user]["res"] = esperar('span[data-ad-rendering-role="share_button"]', 0)
-                
-            else:
-                temp_dict[user]["res"] = esperar('span[data-ad-rendering-role="share_button"]', 1)
-        
-            if temp_dict[user]["res"][0] == "error":
-                give_error(bot, driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"]))
-                
-                return
-        
-            else:
-                temp_dict[user]["res"] = temp_dict[user]["res"][1]
-                    
                     
             #click en el boton de compartir en la publicacion
-            time.sleep(5)
             temp_dict[user]["res"].click()
             print("Le he dado click en el botón Compartir")
             
 
-            #comprobar si ya existe el elemento de grupos en el DOM
-            # res = esperar('i[class="x1b0d499 xep6ejk"]', 9)
-            temp_dict[user]["res"] = esperar('div[class="xnfxvih xh8yej3"]', 1)
             
-            if temp_dict[user]["res"][0] == "error":
-                
-                give_error(bot, driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"][1]))
-                return
-                    
-
-
-            #click en compartir en grupos
-            # time.sleep(2)
-            temp_dict[user]["res"][1].find_elements(By.CSS_SELECTOR, 'i[class="x1b0d499 xep6ejk"]')[4].click()
+            #elemento de los grupos
+            driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5].click()
             print("Click en Compartir Grupos")
 
             #esperar lista de grupos
             try:
                 print("Esperando lista de grupos visibles")
-                wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')))
+
+                #elemento padre de los grupos
+                wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
                 break
                 
             except Exception as err:
-                try:
-                    #a veces la lista de grupos aparece y magicamente desaparece, mostrando de nuevo la publicacion con el boton de compartir, en esta condicion, si el boton compartir de la publicacion vuelve a aparecer entonces se le da de nuevo
-                    if len(driver.find_elements(By.CSS_SELECTOR, 'div[role="dialog"]')) >= 3:
-                        continue
-                except:
-                    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
-                    raise err
+
+                bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+
+                raise err
 
 
         #obtener grupos
         print("Obteniendo grupos")
-        temp_dict[user]["lista_grupos"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')
-        
-        if not temp_dict[user]["lista_grupos"] or len(temp_dict[user]["lista_grupos"]) < contador:
-            try:
-                temp_dict[user]["lista_grupos"] = wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')))
-            except:
-                temp_dict[user]["lista_grupos"] = False
-                
-        
-        
-        
+        temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
+             
         
         if not temp_dict[user]["lista_grupos"]:
             
@@ -801,21 +765,21 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         
         #si ya recorrimos todos los elementos de la lista...
         while len(temp_dict[user]["lista_grupos"]) < contador + 1:
-            
-            temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')).perform()
+
+            #apuntando el cursor encima de los grupos
+            temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
             
             #por alguna razón, cuando lo pruebo en el debugger esta linea me da error con la variable 'temp_dict[user]["lista_grupos"]' que almacena los grupos asi que lo pongo en un try-except
-            try:
-                temp_dict[user]["a"].scroll_to_element(temp_dict[user]["lista_grupos"][-1]).perform()
-            except:
-                temp_dict[user]["a"].scroll_to_element(driver.find_elements(By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')[-1]).perform()
+
+            temp_dict[user]["a"].scroll_to_element(temp_dict[user]["lista_grupos"][-1]).perform()
+
             
             
             temp_dict[user]["a"].scroll_from_origin(ScrollOrigin.from_element(temp_dict[user]["lista_grupos"][-1]), 0 , 50).perform()
             
             #cambiar valor
             try:
-                wait_s.until(ec.any_of(lambda driver: len(temp_dict[user]["lista_grupos"]) < len(driver.find_elements(By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]'))))
+                wait_s.until(ec.any_of(lambda driver: len(temp_dict[user]["lista_grupos"]) < len(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]'))))
                 
             except:
                 pass
@@ -823,19 +787,24 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             #si ya se recorrieron todos los grupos y la lista de grupos guardada es igual a la que resulta de la búsqueda entonces se terminó exitosamente de publicar
             
 
-            if len(temp_dict[user]["lista_grupos"]) == len(driver.find_elements(By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')):
+            if len(temp_dict[user]["lista_grupos"]) == len(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')):
                 bot.unpin_chat_message(temp_dict[user]["info"].chat.id, temp_dict[user]["info"].message_id)
                 
                 return ("ok", "Se ha publicado exitosamente en " + str(len(temp_dict[user]["publicacion"]["publicados"])) + " grupo(s)")
             
             # si la lista de grupos guardada es menor a la nueva resultante de la busqueda, entonces se actualiza los elementos de la lista de grupos y se continua
             else:
-                temp_dict[user]["lista_grupos"] = wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')))
+                temp_dict[user]["lista_grupos"] = wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')))
+
+                temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
       
         
         
-        temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')).perform()
+        
+        temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
+
         temp_dict[user]["a"].scroll_to_element(temp_dict[user]["lista_grupos"][contador]).perform()
+
         temp_dict[user]["publicacion"]["nombre"] = temp_dict[user]["lista_grupos"][contador].text.split("\n")[0].strip()
         # time.sleep(2)
         temp_dict[user]["lista_grupos"][contador].click()
@@ -885,7 +854,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, "Lista de Grupos en los que se ha Publicado:\n\n")
         try:
             #esperaré x segundos para ver si desaparece la ventana para publicar
-            wait_s.until(ec.any_of(lambda driver: not len(driver.find_elements('div[role="dialog"]')) >= 3))
+            wait_s.until(ec.any_of(lambda driver: not driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
             
             temp_dict[user]["publicacion"]["error"].append(temp_dict[user]["publicacion"]["nombre"])
             temp_dict[user]["res"] = obtener_texto(temp_dict, True)
@@ -916,7 +885,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         #esperar a que aparezca el elemento de 'Publicar' 
         try:
             
-            temp_dict[user]["res"] = ("ok", wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[class="x1l90r2v xyamay9 x1n2onr6"]'))).find_element(By.CSS_SELECTOR, 'div.x1i10hfl.xjbqb8w.x1ejq31n'))
+            temp_dict[user]["res"] = ("ok", wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]'))))
             
         except:
             temp_dict[user]["res"] = ("error", "NO se pudo localizar el boton para publicar en los grupos")
@@ -930,13 +899,13 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         #click en publicar cambiar
         # time.sleep(2)
         try:
-            temp_dict[user]["res"][1].click()
+            temp_dict[user]["res"][1][-1].click()
         
             #cambiar descomentar para pruebas, este es el boton para cerrar la ventana de publicacion
             # driver.find_element(By.CSS_SELECTOR, 'div[class="xurb0ha"]').click()
         
         except:
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user, driver.find_element(By.CSS_SELECTOR, 'div[class="x1l90r2v xyamay9 x1n2onr6"]')))) 
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user))) 
             return ("error" , "¿Facebook me habrá bloqueado?")
         
         
@@ -954,7 +923,7 @@ def elegir_cuenta(driver, user, bot ,ver_actual=False):
     
     try:
         #si ya el menú de cuentas está desplegado... hay que omitir cosas
-        temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, 'div.x1gslohp')
+        temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, 'div[role="list"]')
 
         temp_dict[user]["e"] = True
         
@@ -963,13 +932,18 @@ def elegir_cuenta(driver, user, bot ,ver_actual=False):
         
     if not temp_dict[user]["e"]:  
         print("Voy a esperar a que salga el menu de cuentas")
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'svg[class="x3ajldb"]'))).click()
-        #comprobaré si sale el botón de seleccionar otros perfiles, si es que hay 
+        #este elemento es el de los ajustes del perfil (las 3 rayas de la derecha superior)
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role=button][data-mcomponent="MContainer"][data-action-id="32746"]'))).click()
+
+        #Elemento de Configuracion de cuenta
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="list"]')))
+
         print("comprobaré si sale el botón de seleccionar otros perfiles, si es que hay")
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div.x1gslohp')))
+        #Flecha para ver otros perfiles/cambiar
+
 
         try:
-            driver.find_element(By.CSS_SELECTOR, 'div.x1gslohp').find_elements(By.CSS_SELECTOR, 'span')[-1].click()
+            wait_s.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="button"][data-action-id="32745"]'))).click()
             
             temp_dict[user]["res"] = ("ok", "han salido")
             print("Click en ver todos los perfiles")
@@ -991,14 +965,14 @@ def elegir_cuenta(driver, user, bot ,ver_actual=False):
         #esperar a que salgan las cuentas
         # padre => "div.x1gslohp"
         print("Esperaré a que salgan todas las cuentas en el navegador")
-        # wait.until(ec.any_of(lambda d: d.find_elements(By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')))
-        wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')))
+
+        #este elemento es el padre de las cuentas, concretamente el 2do elemento en el html
+        wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')))
 
 
         print("Obteniendo los elementos de las cuentas...")
-        temp_dict[user]["cuentas"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="listitem"][data-visualcompletion="ignore-dynamic"]')
-        #remuevo el último elemento porque no es una cuenta sino una opcion de facebook en el mismo menú de cuentas
-        temp_dict[user]["cuentas"].remove(temp_dict[user]["cuentas"][-1])
+
+        temp_dict[user]["cuentas"] = driver.find_elements(By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')[1].find_elements(By.CSS_SELECTOR, 'div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-type="container"][data-mcomponent="MContainer"]')
         
         # if not ver_actual:
         
@@ -1022,7 +996,7 @@ def elegir_cuenta(driver, user, bot ,ver_actual=False):
             
             temp_dict[user]["cuentas"][temp_dict[user]["res"]].click() 
             print("cuenta elegida!")
-            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "div#screen-root")))
             guardar_cookies(driver, user)
             
 
@@ -1038,10 +1012,9 @@ def elegir_cuenta(driver, user, bot ,ver_actual=False):
     
     else:
         print("Al parecer solamente hay 1 perfil")
-        #Perfil principal
-        temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, 'div.x1gslohp').find_element(By.CSS_SELECTOR, 'a[tabindex="0"]')
-        
-        temp_dict[user]["res"] = ("ok", temp_dict[user]["e"].text)
+
+        #Perfil principal        
+        temp_dict[user]["res"] = ("ok", d.find_element(By.CSS_SELECTOR, 'div[role=button][data-action-id="32757"]').text.split("\n")[0])
 
         return temp_dict[user]["res"]
 
@@ -1083,48 +1056,12 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
         raise Exception("error intentando hacer loguin\nID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
 
     print("Empezaré a comprobar si hay algún error luego del loguin")
-    #podria aparecer un dialogo sobre si guardar la información de la cuenta        
-    try:    
-        temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, 'div[class="x1n2onr6 x1ja2u2z x1afcbsf xdt5ytf x1a2a7pz x71s49j x1qjc9v5 xrjkcco x58fqnu x1mh14rs xfkwgsy x104qc98 x78zum5 x1plvlek xryxfnj xh8yej3 xrlsmeg"]')
-        
-    except:
-        temp_dict[user]["e"] = False
-    
-    finally:
-        if temp_dict[user]["e"]:
-            #le doy que si
-            temp_dict[user]["e"].find_element(By.CSS_SELECTOR, 'span[class="x1lliihq x193iq5w x6ikm8r x10wlt62 xlyipyv xuxw1ft"]').click()
-            
-            try:
-                temp_dict[user]["e"] = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="main"]')))  
-            except:
-                temp_dict[user]["e"] = None
-                bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), caption="Captura del error")
-                raise Exception("Faltó algo al intentar loguear :(")
-                
-                
-    try:
-        driver.find_element(By.CSS_SELECTOR, 'div[class="_45ks"]')
-        try:
-            temp_dict[user]["res"] = cookies_caducadas(driver, user, bot)
-            if temp_dict[user]["res"][0] == "error":
-                bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
-                raise Exception(temp_dict[user]["res"][1])
-                
-        except:
 
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
-            raise Exception("Ha ocurrido un error con loguin de cookies caducadas! ID del usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
-
-            
-    
-    except:
-        pass
     
             
     try:
         #comprobando estar en el inicio de la mainpage de facebook
-        temp_dict[user]["e"] = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="main"]')))
+        temp_dict[user]["e"] = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
 
     except:
         temp_dict[user]["e"] = None
