@@ -823,8 +823,11 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             
 
             if len(temp_dict[user]["lista_grupos"]) == len(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')):
-
-                bot.unpin_chat_message(temp_dict[user]["info"].chat.id, temp_dict[user]["info"].message_id)
+                
+                try:
+                    bot.unpin_chat_message(temp_dict[user]["info"].chat.id, temp_dict[user]["info"].message_id)
+                except:
+                    pass
                 
                 return ("ok", "Se ha publicado exitosamente en " + str(len(temp_dict[user]["publicacion"]["publicados"])) + " grupo(s)")
             
@@ -839,10 +842,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         
         # temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
 
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-type="vscroller"')))
 
-
-        temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
 
         temp_dict[user]["a"].scroll_to_element(temp_dict[user]["lista_grupos"][contador]).perform()
 
@@ -850,19 +850,19 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         # time.sleep(2)
 
 
-        time.sleep(3)
-        temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
 
-        wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')[1].text))
+        # wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')[1].text))
 
-        temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
 
         temp_dict[user]["lista_grupos"][contador].click()
 
         
         def obtener_texto(temp_dict, error: bool):
             
-            temp_dict[user]["info"] = bot.edit_message_text("✅Se ha publicado en: " + str(len(temp_dict[user]["publicacion"]["publicados"])) + " grupo(s)\n❌Se han producido errores en: " + str(len(temp_dict[user]["publicacion"]["error"])) + " grupo(s)", user, temp_dict[user]["info"].message_id)
+            try:
+                temp_dict[user]["info"] = bot.edit_message_text("✅Se ha publicado en: " + str(len(temp_dict[user]["publicacion"]["publicados"])) + " grupo(s)\n❌Se han producido errores en: " + str(len(temp_dict[user]["publicacion"]["error"])) + " grupo(s)", user, temp_dict[user]["info"].message_id)
+            except:
+                temp_dict[user]["info"] = bot.send_message(user, "✅Se ha publicado en: " + str(len(temp_dict[user]["publicacion"]["publicados"])) + " grupo(s)\n❌Se han producido errores en: " + str(len(temp_dict[user]["publicacion"]["error"])) + " grupo(s)")
             
             #4000 caracteres es el limite de telegram para los mensajes, si sobrepasa la cantidad tengo que enviar otro mensaje            
             if len(temp_dict[user]["publicacion"]["texto_publicacion"] + "❌ " + temp_dict[user]["publicacion"]["nombre"] + "\n") >= 4000:
@@ -910,8 +910,14 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         
         if temp_dict[user]["res"][0] == "nuevo":
             temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, temp_dict[user]["res"][1])
+
         else:
-            temp_dict[user]["publicacion"]["msg_publicacion"] = bot.edit_message_text(temp_dict[user]["res"][1] , user, temp_dict[user]["publicacion"]["msg_publicacion"].message_id)
+
+            try:
+                temp_dict[user]["publicacion"]["msg_publicacion"] = bot.edit_message_text(temp_dict[user]["res"][1] , user, temp_dict[user]["publicacion"]["msg_publicacion"].message_id)
+
+            except:
+                temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, temp_dict[user]["res"][1])
             
             
             
