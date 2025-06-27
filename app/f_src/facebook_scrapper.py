@@ -783,7 +783,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                 raise err
 
         try:
-            print("Url actual a cambiar: {}".format(driver.current_url))
+            print("Url a cambiar: {}\nUrl actual: ".format(temp_dict[user]["url_actual"]), driver.current_url)
             wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
 
         except:
@@ -952,7 +952,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         # time.sleep(2)
         try:
             temp_dict[user]["res"][1][-1].click()
-        
+            print("Publiqué exitosamente en: {}".format(temp_dict[user]["publicacion"]["nombre"]))
             #cambiar descomentar para pruebas, este es el boton para cerrar la ventana de publicacion
             # driver.find_element(By.CSS_SELECTOR, 'div[class="xurb0ha"]').click()
         
