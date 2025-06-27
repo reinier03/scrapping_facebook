@@ -132,7 +132,6 @@ def uc_driver(mobile=False):
         o = anadir_opciones(o, container=True , mobile=mobile)
 
         driver = uc.Chrome(
-            use_subprocess=False,
             options=o,
             log_level=3,
             keep_alive=True,

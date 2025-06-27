@@ -37,7 +37,7 @@ driver = uc_driver(True)
 
 
     
-wait = WebDriverWait(driver, 80)
+wait = WebDriverWait(driver, 30)
 cliente = MongoClient(MONGO_URL)
 db = cliente["face"]
 collection = db["usuarios"]
@@ -818,7 +818,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             
 
             if len(temp_dict[user]["lista_grupos"]) == len(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')):
-                
+
                 bot.unpin_chat_message(temp_dict[user]["info"].chat.id, temp_dict[user]["info"].message_id)
                 
                 return ("ok", "Se ha publicado exitosamente en " + str(len(temp_dict[user]["publicacion"]["publicados"])) + " grupo(s)")
