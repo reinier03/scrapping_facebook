@@ -525,13 +525,12 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
             try:
                 #Si este elemento no está es que aún está en el loguin debido a que los datos introducidos fueron incorrectos
 
-
                 
                 driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[3].click()
 
             except:
-            
-                driver.find_element(By.ID, "m_login_password")
+
+                driver.find_element(By.CSS_SELECTOR, "input#m_login_password")
                 info_message("Has introducido tus datos de loguin incorrectamente...\nPor favor, vuelve a intentarlo luego del próximo mensaje", bot, temp_dict, user)
                 
                 del temp_dict[user]["user"]
@@ -540,7 +539,42 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
                 return loguin_cero(driver, user, bot)
 
         except:
-            raise Exception("ID usuario: " + str(user) + "\n\nNo se ha podido dar click en el botón de doble autenticación")
+            #esto aparecerá si requiere una verificacion por correo
+            try:
+                if wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))):
+
+                    temp_dict[user]["url_actual"] = driver.current_url
+                    
+                    driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
+
+                    handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta para finalizar el loguin...", "email_verification", temp_dict, makup=ReplyKeyboardMarkup)
+
+                    driver.find_element(By.CSS_SELECTOR, 'input').send_keys(temp_dict[user]["res"])
+
+                    bot.send_message(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura del email verification")
+
+                    driver.find_element(By.XPATH, '//*[contains(text(), "Continue")]').click()
+
+                    print("cambiar la url a la de save-device")
+                    wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
+
+                    #click en confiar en este dispositivo
+                    try:
+                        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
+                        driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
+
+                    except:
+                        raise Exception("Error al terminar de ingresar el codigo del correo")
+
+                    # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto", chat_id=user, message_id=temp_dict[user]["info"].message_id)     
+                    
+                    bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
+                    
+                    return ("ok", "se ha dado click en confiar dispositivo")
+
+                    
+            except:
+                raise Exception("ID usuario: " + str(user) + "\n\nNo se ha podido dar click en el botón de doble autenticación")
         
         wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
         
