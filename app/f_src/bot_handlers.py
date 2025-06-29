@@ -63,3 +63,19 @@ def perfil_seleccion(m, bot:telebot.TeleBot ,user, info, temp_dict, teclado):
         temp_dict[user]["completed"] = True
         
         return
+
+
+def correo_o_numero_verificacion(m, bot:telebot.TeleBot ,user, info, temp_dict):
+
+    temp_dict[user]["res"] = m.text
+    temp_dict[user]["completed"] = True
+
+    return m.text
+
+
+def correo_o_numero_verificacion(m, bot:telebot.TeleBot ,user, info, temp_dict):
+
+    temp_dict[user]["res"] = m.text
+    temp_dict[user]["completed"] = True
+
+    return m.text

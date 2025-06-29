@@ -213,7 +213,7 @@ def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
                 pass
             
             finally:
-                return Exception("Error intentando acceder a la base de datos:\n\nDescripción:\n" + str(format_exc))
+                return Exception("Error intentando acceder a la base de datos:\n\nDescripción:\n" + str(format_exc()))
     
     if hacer_loguin == True:
         #Porqué lo pongo en un while True? porque vivo en Cuba :( MI conexion a internet es lentisima entonces si no controlo esto arrojara un timeout
@@ -237,11 +237,75 @@ def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
             
         # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nMuy Bien, Ya accedí a Facebook :D", chat_id=user, message_id=temp_dict[user]["info"].message_id)
         
-        
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
 
-    
         try:
-            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+            #podria salir un recuadro para elegir el perfil
+            if len(driver.find_element(By.CSS_SELECTOR, 'img[data-type="image"][class="img contain"]')) == 4:
+
+                #Aqui elijo el perfil
+                driver.find_element(By.CSS_SELECTOR, 'div[tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m bg-s5"]').click()
+
+                wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="password"]')))
+                
+                with open(os.path.join(user_folder(user), "cookies.pkl"), "rb") as file_cookies:
+                    
+                    temp_dict[user]["password"] = dill.load(file_cookies)["password"]
+
+                    for i in temp_dict[user]["password"]:
+                        driver.find_element(By.CSS_SELECTOR, 'input[type="password"]').send_keys(i)
+
+                        time.sleep(0.5)
+
+                    #click en continuar
+                    driver.find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-tti-phase="-1"][data-focusable="true"][data-type="container"][tabindex="0"]')[1].click()
+
+                    #saldra un cartel de doble autenticacion obligatoria
+                    #en este punto, si el usuario ya confirmo una doble autenticacion anteriormente, facebook ira directamente a la main page y no requerirá verificacion
+                    try:
+                        wait_s.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[class="fl ac am"]')))
+                        
+                        #dare en aceptar
+                        try:
+                            driver.find_element(By.CSS_SELECTOR, 'div[class="fl ac am"]').click()
+
+                            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="text"]')))
+
+                            handlers(bot, user , "Introduce tu número de movil (con el código regional adelante, ejemplo: +53, +52 , +01, etc) o tu correo electrónico para enviar el código de verificación" , "correo_o_numero", temp_dict)
+
+                            for i in temp_dict[user]["res"]:
+
+                                driver.find_element(By.CSS_SELECTOR, 'input[type="text"]').send_keys(i)
+
+                                time.sleep(0.5)
+
+                            handlers(bot, user , "Ahora introduce el código del SMS o el código que se te fué enviado a Whatsapp, revisa ambas\n\nEn caso de que no llegue, espera un momento..." , "correo_o_numero_verificacion", temp_dict)
+
+                            for i in temp_dict[user]["res"]:
+
+                                driver.find_element(By.CSS_SELECTOR, 'input[type="password"]').send_keys(i)
+
+                                time.sleep(0.5)
+                            
+                            #Cuidado aqui! No termine de localizar el boton para continuar, este lo agrego porque creo que funcionará
+                            driver.find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-tti-phase="-1"][data-focusable="true"][data-type="container"][tabindex="0"]')[1].click()
+
+                        except:
+
+                            pass
+                        
+
+                    except:
+                        pass
+
+        except:
+            pass
+
+
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
+
+        try:
+            
             bot.send_message(user, "🆕 Mensaje de Información\n\nMuy Bien, Ya accedí a Facebook :D")
             # wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="main"]')))
             print("Se cargaron cookies ")
@@ -730,6 +794,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
                 driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').send_keys(Keys.END)
 
+                time.sleep(6)
                 driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
 
                         
@@ -754,10 +819,11 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                 except:
                     pass
 
-            #click en compartir en grupos
+            
             temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
 
-            
+            #click en compartir en grupos
+            time.sleep(8)
             temp_dict[user]["e"].click()
 
             try:
@@ -806,8 +872,8 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
             
             #por alguna razón, cuando lo pruebo en el debugger esta linea me da error con la variable 'temp_dict[user]["lista_grupos"]' que almacena los grupos asi que lo pongo en un try-except
-
-            temp_dict[user]["a"].scroll_to_element(temp_dict[user]["lista_grupos"][-1]).perform()
+            
+            hacer_scroll(driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][-1], (contador + 1) // 2)
 
             
             
@@ -835,7 +901,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             else:
                 temp_dict[user]["lista_grupos"] = wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')))
 
-                temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
+                temp_dict[user]["lista_grupos"] = driver.find_elements(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
       
         
         
@@ -843,8 +909,8 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         # temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
 
 
-
-        temp_dict[user]["a"].scroll_to_element(temp_dict[user]["lista_grupos"][contador]).perform()
+        hacer_scroll(driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][contador], (contador + 1) // 2)
+        
 
         temp_dict[user]["publicacion"]["nombre"] = temp_dict[user]["lista_grupos"][contador].text
         # time.sleep(2)
@@ -853,8 +919,11 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
         # wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')[1].text))
 
-
-        temp_dict[user]["lista_grupos"][contador].click()
+        try:
+            temp_dict[user]["lista_grupos"][contador].click()
+        except:
+            temp_dict[user]["a"].scroll_to_element(temp_dict[user]["lista_grupos"][contador]).perform()
+            temp_dict[user]["lista_grupos"][contador].click()
 
         
         def obtener_texto(temp_dict, error: bool):
@@ -934,15 +1003,16 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         
         
         if temp_dict[user]["res"][0] == "error":
-            make_screenshoot(driver, user)
-            return ("error", "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"][1]))
+            give_error(bot, driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"][1]))
 
 
-        #click en publicar cambiar
-        # time.sleep(2)
+        
         try:
+            #click en publicar
+            time.sleep(8)
             temp_dict[user]["res"][1][-1].click()
             print("Publiqué exitosamente en: {}".format(temp_dict[user]["publicacion"]["nombre"]))
+
             #cambiar descomentar para pruebas, este es el boton para cerrar la ventana de publicacion
             # driver.find_element(By.CSS_SELECTOR, 'div[class="xurb0ha"]').click()
         
@@ -1176,6 +1246,7 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
         temp_dict[user]["res"] = publicacion(driver, bot , link_publicacion, user)
         if temp_dict[user]["res"][0] == "error":
             print(temp_dict[user]["res"][1])
+            
         
     except:
 

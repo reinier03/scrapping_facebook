@@ -10,6 +10,29 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import Chrome
 
 
+def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elemento, pasos: int | False, esperar = 2):
+
+    #a partir de los ultimos 11 elementos el scroll es inútil
+    if len(grupos) <= 11:
+        return "ok"
+
+
+    temp_dict[user]["y_scroll"] = (elemento.location["y"] - 100) // pasos
+
+    for i in pasos:
+
+
+        temp_dict[user]["a"].scroll_by_amount(0, temp_dict[user]["y_scroll"]).perform()
+
+        if esperar:
+            time.sleep(esperar)
+
+    temp_dict[user]["a"].scroll_to_element(elemento).perform()
+
+    del temp_dict[user]["y_scroll"]
+
+    return "ok"
+
 def give_error(bot, driver, user, texto):
     bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del Error")
     raise Exception(texto)
@@ -123,7 +146,7 @@ def make_captcha_screenshoot(captcha_element, user):
     return os.path.join(user_folder(user), str(user) + "_captcha.png")
 
 
-def handlers(bot: telebot.TeleBot, user , msg ,info, temp_dict , **kwargs):    
+def handlers(bot, user , msg ,info, temp_dict , **kwargs):    
     
     
     if kwargs.get("file"):
@@ -173,8 +196,15 @@ def handlers(bot: telebot.TeleBot, user , msg ,info, temp_dict , **kwargs):
         case "perfil_seleccion":
             
             bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.perfil_seleccion, bot,user, info, temp_dict, kwargs.get("markup"))
+
+        case "correo_o_numero":
+
+            bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.correo_o_numero, bot,user, info, temp_dict)
+
+
+        case "correo_o_numero_verificacion":
             
-            
+            bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.correo_o_numero_verificacion, bot,user, info, temp_dict)
             
             
     while True:
