@@ -651,11 +651,12 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
         else:
             driver.get("https://facebook.com")
     
-    e = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
     
     #-----------------obtener usuario para loguin---------------
     try:
-        e = wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
+        wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
+        temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_email")
 
     except:
         #a veces te puede salir este cartel en el inicio
@@ -668,22 +669,26 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
         handlers(bot, user, "Introduce a continuación tu <b>Correo</b> o <b>Número de Teléfono</b> (agregando el código de tu país por delante ej: +53, +01, +52, etc) con el que te autenticas en Facebook: ", "user", temp_dict)
 
 
-    e.send_keys(temp_dict[user]["user"])
+    temp_dict[user]["e"].send_keys(temp_dict[user]["user"])
     
     
     #-----------------obtener password para loguin---------------
-    e = wait.until(ec.visibility_of_element_located((By.ID, "m_login_password")))
+    wait.until(ec.visibility_of_element_located((By.ID, "m_login_password")))
+    temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_password")
     
     if not temp_dict[user].get("password"):
         handlers(bot, user, "Introduce a continuación la contraseña", "password", temp_dict)
     
-    
+    #quitar
+    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura de loguin")
     temp_dict[user]["url_actual"] = driver.current_url
     
-    e.send_keys(temp_dict[user]["password"])
+    temp_dict[user]["e"].send_keys(temp_dict[user]["password"])
     
-    e = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-anchor-id="replay"]')))
-    e.click()
+    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-anchor-id="replay"]')))
+
+    driver.find_element(By.CSS_SELECTOR, 'div[data-anchor-id="replay"]').click()
+    
     try:
         wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
         wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
@@ -1084,7 +1089,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             # driver.find_element(By.CSS_SELECTOR, 'div[class="xurb0ha"]').click()
         
         except:
-            breakpoint()
+
             bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user))) 
             return ("error" , "¿Facebook me habrá bloqueado?")
         
