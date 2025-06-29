@@ -22,6 +22,7 @@ def anadir_opciones(o, container=False, mobile=False):
     o.add_argument("--disable-infobars")
     o.add_argument("--disable-blink-features=AutomationControlled")
     o.add_argument("--disable-features=ChromeWhatsNewUI")
+    o.add_argument("--lang=es-ES")
 
     # o.add_argument("--single-process")
     # o.add_argument("--disable-dev-shm-usage")
@@ -35,9 +36,10 @@ def anadir_opciones(o, container=False, mobile=False):
     
         
     if container:
-        o.add_argument("--headless=new")
-        o.add_argument("--disable-dev-shm-usage")
-        o.add_argument("--disable-gpu")
+        # o.add_argument("--headless=new")
+        # o.add_argument("--disable-dev-shm-usage")
+        # o.add_argument("--disable-gpu")
+        pass
 
     if mobile:
         # user-agent mobile
@@ -147,6 +149,7 @@ def uc_driver(mobile=False):
             options=o,
             log_level=3,
             keep_alive=True,
+            
             driver_executable_path=r'C:\Users\Reima\AppData\Local\Programs\Python\Python312\Lib\site-packages\seleniumbase\drivers\chromedriver.exe'
         )
     
