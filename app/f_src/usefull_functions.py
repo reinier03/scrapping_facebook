@@ -10,16 +10,19 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import Chrome
 
 
-def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elemento, pasos: int | False, esperar = 2):
+def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elemento, pasos: int, esperar = 2):
 
     #a partir de los ultimos 11 elementos el scroll es inútil
-    if len(grupos) <= 11:
+    if len(grupos) <= 11 or pasos == 0:
+        if esperar:
+            time.sleep(esperar)
+
         return "ok"
 
-
     temp_dict[user]["y_scroll"] = (elemento.location["y"] - 100) // pasos
+    
 
-    for i in pasos:
+    for i in range(pasos):
 
 
         temp_dict[user]["a"].scroll_by_amount(0, temp_dict[user]["y_scroll"]).perform()
@@ -27,7 +30,6 @@ def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elem
         if esperar:
             time.sleep(esperar)
 
-    temp_dict[user]["a"].scroll_to_element(elemento).perform()
 
     del temp_dict[user]["y_scroll"]
 
@@ -95,13 +97,21 @@ def comprobar_BD(collection):
         
         raise Exception("Conecta la Base de Datos!\n\nDescripción del error:\n" + format_exc())
 
-def info_message(texto, bot:telebot.TeleBot, temp_dict, user, markup = False):
-    if not markup:
-        temp_dict[user]["info"] = bot.edit_message_text("🆕 Mensaje de Información\n\n{}".format(texto), chat_id=user, message_id=temp_dict[user]["info"].message_id)
+def info_message(texto, bot:telebot.TeleBot, temp_dict, user, mensaje_obj=False , markup = False):
+    if mensaje_obj:
+        if not markup:
+            temp_dict[user]["info"] = bot.edit_message_text("🆕 Mensaje de Información\n\n" + texto, chat_id=user, message_id=temp_dict[user]["info"].message_id)
+        
+        else:
+            temp_dict[user]["info"] = bot.edit_message_text("🆕 Mensaje de Información\n\n" + texto, chat_id=user, message_id=temp_dict[user]["info"].message_id, reply_markup=markup)
     
     else:
-        temp_dict[user]["info"] = bot.edit_message_text("🆕 Mensaje de Información\n\n" + texto, chat_id=user, message_id=temp_dict[user]["info"].message_id, reply_markup=markup)
+        if not markup:
+            temp_dict[user]["info"] = bot.send_message(user, "🆕 Mensaje de Información\n\n" + texto)
         
+        else:
+            temp_dict[user]["info"] = bot.send_message(user, "🆕 Mensaje de Información\n\n" + texto, reply_markup=markup)
+            
     return temp_dict[user]["info"]
 
 def main_folder():
@@ -114,7 +124,7 @@ def main_folder():
             return os.path.dirname(os.path.abspath(__file__))
         
     else:
-        return os.getcwd()
+        return os.path.dirname(sys.argv[0])
             
 
 

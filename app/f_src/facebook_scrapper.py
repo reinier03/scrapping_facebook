@@ -522,10 +522,25 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
             wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4))
 
             #elemento de 'Usar otro metodo' para elegir los codigos de seguridad
-            driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[3].click()
+            try:
+                #Si este elemento no está es que aún está en el loguin debido a que los datos introducidos fueron incorrectos
+
+
+                
+                driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[3].click()
+
+            except:
+            
+                driver.find_element(By.ID, "m_login_password")
+                info_message("Has introducido tus datos de loguin incorrectamente...\nPor favor, vuelve a intentarlo luego del próximo mensaje", bot, temp_dict, user)
+                
+                del temp_dict[user]["user"]
+                del temp_dict[user]["password"]
+
+                return loguin_cero(driver, user, bot)
 
         except:
-            give_error(bot, driver, user, "ID usuario: " + str(user) + "\n\nNo se ha podido dar click en el botón de doble autenticación")
+            raise Exception("ID usuario: " + str(user) + "\n\nNo se ha podido dar click en el botón de doble autenticación")
         
         wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
         
@@ -621,7 +636,7 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
 
         if os.name == "nt":
             try:
-                driver.get("https://facebook.com")
+                driver.get("https://m.facebook.com/login/")
             except:
                 pass
             
@@ -639,8 +654,15 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
     e = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
     
     #-----------------obtener usuario para loguin---------------
-    e = wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
-    
+    try:
+        e = wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
+
+    except:
+        #a veces te puede salir este cartel en el inicio
+        driver.find_element(By.CSS_SELECTOR, 'img[src="https://z-m-static.xx.fbcdn.net/rsrc.php/v4/yH/r/BclC1m8Y3Sb.png"]')
+        
+        driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')[4].click()
+
     #cambiar
     if not temp_dict[user].get("user"):
         handlers(bot, user, "Introduce a continuación tu <b>Correo</b> o <b>Número de Teléfono</b> (agregando el código de tu país por delante ej: +53, +01, +52, etc) con el que te autenticas en Facebook: ", "user", temp_dict)
@@ -721,11 +743,26 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
     except Exception as e:
         # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo", chat_id=user, message_id=temp_dict[user]["info"].message_id) 
 
+        if "save-device" in driver.current_url:
+
+            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
+
+            driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
+
+            wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')) >= 3 and not "save-device" in driver.current_url))
+
+            guardar_cookies(driver, user, loguin={"user": temp_dict[user]["user"], "password": temp_dict[user]["password"]})
+
+            print("He guardado las cookies")
+            
+            return ("ok", "loguin desde cero satisfactorio :)")
+
         temp_dict[user]["res"] = make_screenshoot(driver, user)
         
         bot.send_photo(user, telebot.types.InputFile(temp_dict[user]["res"]) , "🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo")
 
-        del temp_dict[user]
+        del temp_dict[user]["user"]
+        del temp_dict[user]["password"]
 
         return loguin_cero(driver, user, bot)
         
@@ -775,14 +812,13 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         #bucle para si la lista de grupos desaparece magicamente
         while True:
             
-            if contador != 0:
-                #aqui compruebo que la ventana de compartir ya no esté interrumpiendo
-                try:
-                    wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
+            # if contador != 0:
+            #     #aqui compruebo que la ventana de compartir ya no esté interrumpiendo
+            #     try:
+            #         wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
                     
-                except:
-                    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura Error")
-                    raise Exception("Facebook me bloqueó?")
+            #     except:
+            #         raise Exception("Facebook me bloqueó?")
                 
             
 
@@ -790,14 +826,41 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
                 #esperar el botón de compartir
                 print("Buscaré el boton de compartir")
-                wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
+                try:
+                    wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
+                    
+                    temp_dict[user]["contador"] = 0
 
-                driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').send_keys(Keys.END)
+                    while True:
+                        driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+                        temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - 200).perform()
 
-                time.sleep(6)
-                driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
+                        time.sleep(4)
 
-                        
+                        try:
+
+                            driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
+                            temp_dict[user]["contador"] = 0
+                            break
+
+                        except Exception as err:
+                            temp_dict[user]["contador"] += 1
+
+                            if temp_dict[user]["contador"] >= 4:
+                                raise err
+
+                            driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+
+                except Exception as err:
+
+                    if driver.current_url == "https://www.facebook.com/":
+                        info_message("¡Qué Pena!\nAl parecer, el enlace que proporcionaste caducó debido a que seguramente lo obtuviste hace mucho tiempo...\n\nVuelve a dicha publicación, copia el enlace y escribeme nuevamente /publicar para compartirlo :\n\n<b>La Operación ha sido cancelada</b>", bot, temp_dict, user)
+
+                        return ("no", "enlace caducado")
+
+                    else:
+                        raise err
+
                 #click en el boton de compartir en la publicacion
                 print("Le he dado click en el botón Compartir")
                 
@@ -922,6 +985,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         try:
             temp_dict[user]["lista_grupos"][contador].click()
         except:
+            print("Error intentando clickear en el grupo? Lo volveré a intentar")
             temp_dict[user]["a"].scroll_to_element(temp_dict[user]["lista_grupos"][contador]).perform()
             temp_dict[user]["lista_grupos"][contador].click()
 
@@ -996,7 +1060,9 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         #esperar a que aparezca el elemento de 'Publicar' 
         try:
             
-            temp_dict[user]["res"] = ("ok", wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]'))))
+            wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]')))
+
+            temp_dict[user]["res"] = ("ok", driver.find_element(By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]'))
             
         except:
             temp_dict[user]["res"] = ("error", "NO se pudo localizar el boton para publicar en los grupos")
@@ -1004,19 +1070,21 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         
         if temp_dict[user]["res"][0] == "error":
             give_error(bot, driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"][1]))
+            return
 
 
         
         try:
             #click en publicar
             time.sleep(8)
-            temp_dict[user]["res"][1][-1].click()
-            print("Publiqué exitosamente en: {}".format(temp_dict[user]["publicacion"]["nombre"]))
+            temp_dict[user]["res"][1].click()
+            print("Publiqué exitosamente en: " + str(temp_dict[user]["publicacion"]["nombre"]))
 
             #cambiar descomentar para pruebas, este es el boton para cerrar la ventana de publicacion
             # driver.find_element(By.CSS_SELECTOR, 'div[class="xurb0ha"]').click()
         
         except:
+            breakpoint()
             bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user))) 
             return ("error" , "¿Facebook me habrá bloqueado?")
         
@@ -1054,97 +1122,106 @@ def elegir_cuenta(driver, user, bot , ver_actual=False):
         #Elemento de Configuracion de cuenta
         wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="list"]')))
 
+
+
         print("comprobaré si sale el botón de seleccionar otros perfiles, si es que hay")
         #Flecha para ver otros perfiles/cambiar
+        
+        wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')))
+
+        temp_dict[user]["res"] = esperar('div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]', 3)
 
 
-        try:
+        if temp_dict[user]["res"][0].lower() == "error":
             
-            temp_dict[user]["res"] = esperar('div[role="button"][data-action-id="32745"]', 0)
 
-            if temp_dict[user]["res"][0].lower() == "error":
+            temp_dict[user]["res"] = esperar('div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"]', 3)
 
-                temp_dict[user]["res"] = esperar('div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"]', 4)
+            if temp_dict[user]["res"][0] == "error":
+
+                raise Exception("No se pudo encontrar el desplegable para ver otros perfiles de la misma cuenta")
 
 
-            temp_dict[user]["res"][1].click()
+        temp_dict[user]["res"][1].click()
+        
+        temp_dict[user]["res"] = ("ok", "han salido")
+        print("Click en ver todos los perfiles")
             
-            temp_dict[user]["res"] = ("ok", "han salido")
-            print("Click en ver todos los perfiles")
-            
-        except:
-            temp_dict[user]["res"] = ("error", "la lista no está, el usuario tiene solamente 1 perfil")
                 
     
-    else:        
-        print("La Lista de perfiles ya es visible")
-        temp_dict[user]["res"] = ("ok", "la lista está")
+
     
     
       
     
-    if temp_dict[user]["res"][0] == "ok":        
+   
         
 
-        #esperar a que salgan las cuentas
-        # padre => "div.x1gslohp"
-        print("Esperaré a que salgan todas las cuentas en el navegador")
+    #esperar a que salgan las cuentas
+    # padre => "div.x1gslohp"
+    print("Esperaré a que salgan todas las cuentas en el navegador")
 
-        #este elemento es el padre de las cuentas, concretamente el 2do elemento en el html
-        wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')))
+    #este elemento es el padre de las cuentas, concretamente el 2do elemento en el html
+    esperar('div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]', 1)
 
 
-        print("Obteniendo los elementos de las cuentas...")
+    print("Obteniendo los elementos de las cuentas...")
 
-        wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')) >= 2))
 
-        temp_dict[user]["cuentas"] = driver.find_elements(By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')[1].find_elements(By.CSS_SELECTOR, 'div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-type="container"][data-mcomponent="MContainer"]')
+    temp_dict[user]["cuentas"] = driver.find_elements(By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')[1].find_elements(By.CSS_SELECTOR, 'div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-type="container"][data-mcomponent="MContainer"]')
 
-        temp_dict[user]["cuentas"].remove(temp_dict[user]["cuentas"][0])
+    temp_dict[user]["cuentas"].remove(temp_dict[user]["cuentas"][0])
 
-        # if not ver_actual:
+    
+    #ahora quitaré el elemento que dice "Crear Perfil"
+    for e, i in enumerate(temp_dict[user]["cuentas"]):
+
+        try:
+            if i.find_element(By.CSS_SELECTOR, 'img'):
+                continue
+
+        except:
+            temp_dict[user]["cuentas"].remove(temp_dict[user]["cuentas"][e])
+    
+    if len(temp_dict[user]["cuentas"]) == 1:
+        return ("ok", temp_dict[user]["cuentas"][0].text.split("\n")[0], "uno")
+
+    
+    
+    
+    if not ver_actual:
         
         print("Creando el teclado del mensaje...")
-        
-        if not ver_actual:
+        temp_dict[user]["teclado"] = ReplyKeyboardMarkup(True, True, input_field_placeholder="Elige un perfil")
+        temp_dict[user]["perfiles"] = []
+    
+        for e,cuenta in enumerate(temp_dict[user]["cuentas"], 1):     
             
-            temp_dict[user]["teclado"] = ReplyKeyboardMarkup(True, True, input_field_placeholder="Elige un perfil")
-            temp_dict[user]["perfiles"] = []
-        
-            for e,cuenta in enumerate(temp_dict[user]["cuentas"], 1):     
-                
-                temp_dict[user]["perfiles"].append(cuenta.text.split("\n")[0])
-                
-                temp_dict[user]["teclado"].add(cuenta.text.split("\n")[0])               
-                
-
-                            
-            print("Ahora elige la cuenta...")
-            handlers(bot, user, "Cual de los perfiles de esta cuenta quieres usar?", "perfil_elegir", temp_dict, markup=temp_dict[user]["teclado"])
+            temp_dict[user]["perfiles"].append(cuenta.text.split("\n")[0])
             
-            temp_dict[user]["cuentas"][temp_dict[user]["res"]].click() 
-            print("cuenta elegida!")
-            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "div#screen-root")))
-            guardar_cookies(driver, user)
+            temp_dict[user]["teclado"].add(cuenta.text.split("\n")[0])               
             
 
-            return ("ok", temp_dict[user]["perfiles"][temp_dict[user]["res"]])
+                        
+        print("Ahora elige la cuenta...")
+        handlers(bot, user, "Cual de los perfiles de esta cuenta quieres usar?", "perfil_elegir", temp_dict, markup=temp_dict[user]["teclado"])
+        
+        temp_dict[user]["cuentas"][temp_dict[user]["res"]].click() 
+        print("cuenta elegida!")
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "div#screen-root")))
+        guardar_cookies(driver, user)
+        
+
+        return ("ok", temp_dict[user]["perfiles"][temp_dict[user]["res"]])
+        
+    else:
+        #para ver el perfil actual
+        return ("ok", temp_dict[user]["cuentas"][0].text.split("\n")[0])
             
-        else:
-            #para ver el perfil actual
-            return ("ok", "".join(list(map(lambda i: i.split("\n")[0], temp_dict[user]["cuentas"][0].text))))
-                
 
 
                      
-    
-    else:
-        print("Al parecer solamente hay 1 perfil")
 
-        #Perfil principal        
-        temp_dict[user]["res"] = ("ok", d.find_element(By.CSS_SELECTOR, 'div[role=button][data-action-id="32757"]').text.split("\n")[0])
-
-        return temp_dict[user]["res"]
 
     
 
@@ -1199,7 +1276,7 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
         raise Exception("ID usuario: " + str(user) + "\nFaltó algo :(")
     
 
-    print("A continuación eligiré una cuenta")    
+    print("A continuación miraré cual es la cuenta actual")    
     try:
         temp_dict[user]["res"] = elegir_cuenta(driver , user, bot, ver_actual=True)
         if temp_dict[user]["res"][0] == "error":
@@ -1207,33 +1284,38 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
             bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "ID usuario: " + str(user) + "\n\nDescripción:\n" + str(temp_dict[user]["res"][1]))
             raise Exception("no")
         
+        if not len(temp_dict[user]["res"]) == 3:
+        
+            temp_dict[user]["teclado"] = ReplyKeyboardMarkup(True, True, row_width=1, input_field_placeholder="¿Quieres cambiar a otro perfil?").add("Si", "No")
+            
+
+            handlers(bot, user, "El perfil actual es: <b>" + str(temp_dict[user]["res"][1]) + "</b>\n\n¿Quieres cambiar de perfil?", "perfil_pregunta", temp_dict, markup=temp_dict[user]["teclado"])
+
+            
+            
+            if temp_dict[user]["res"].text.lower() == "si":
+                temp_dict[user]["res"] = elegir_cuenta(driver, user, bot)
+                if temp_dict[user]["res"][0] == "error":
+
+                    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+                    raise Exception("ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"][1]))
+                else:
+                    # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nHe cambiado al perfil de: {temp_dict[user]["res"][1]}", chat_id=user, message_id=temp_dict[user]["info"].message_id, reply_markup=telebot.types.ReplyKeyboardRemove())
+                    
+                    bot.send_message(user, "🆕 Mensaje de Información\n\nHe cambiado al perfil de:  <b>" + str(temp_dict[user]["res"][1]) + "</b>\n\nLoguin completado exitosamente!", reply_markup=telebot.types.ReplyKeyboardRemove())
+
+            else:
+                # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nMuy bien, continuaré con el perfil actual", chat_id=user, message_id=temp_dict[user]["info"].message_id, reply_markup=telebot.types.ReplyKeyboardRemove())
+
+                bot.send_message(user, "🆕 Mensaje de Información\n\nMuy bien, continuaré con el perfil actual\n\nLoguin completado exitosamente!", reply_markup=telebot.types.ReplyKeyboardRemove())
+        else:
+            bot.send_message(user, "Al parecer, solamente está el perfil de: " + str(temp_dict[user]["res"][1]) +"\n\nContinuaré con ese...")
+        
     except:
         bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
         raise Exception("Ha ocurrido un error intentando ver la cuenta actual! ID usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
     
-    else:
-        temp_dict[user]["teclado"] = ReplyKeyboardMarkup(True, True, row_width=1, input_field_placeholder="¿Quieres cambiar a otro perfil?").add("Si", "No")
         
-
-        handlers(bot, user, "El perfil actual es: <b>" + str(temp_dict[user]["res"][1]) + "</b>\n\n¿Quieres cambiar de perfil?", "perfil_pregunta", temp_dict, markup=temp_dict[user]["teclado"])
-
-        
-        
-        if temp_dict[user]["res"].text.lower() == "si":
-            temp_dict[user]["res"] = elegir_cuenta(driver, user, bot)
-            if temp_dict[user]["res"][0] == "error":
-
-                bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
-                raise Exception("ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"][1]))
-            else:
-                # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nHe cambiado al perfil de: {temp_dict[user]["res"][1]}", chat_id=user, message_id=temp_dict[user]["info"].message_id, reply_markup=telebot.types.ReplyKeyboardRemove())
-                
-                bot.send_message(user, "🆕 Mensaje de Información\n\nHe cambiado al perfil de:  <b>" + str(temp_dict[user]["res"][1]) + "</b>\n\nLoguin completado exitosamente!", reply_markup=telebot.types.ReplyKeyboardRemove())
-
-        else:
-            # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nMuy bien, continuaré con el perfil actual", chat_id=user, message_id=temp_dict[user]["info"].message_id, reply_markup=telebot.types.ReplyKeyboardRemove())
-
-            bot.send_message(user, "🆕 Mensaje de Información\n\nMuy bien, continuaré con el perfil actual\n\nLoguin completado exitosamente!", reply_markup=telebot.types.ReplyKeyboardRemove())
 
     
             
@@ -1244,17 +1326,20 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
     
     try:
         temp_dict[user]["res"] = publicacion(driver, bot , link_publicacion, user)
+        
         if temp_dict[user]["res"][0] == "error":
             print(temp_dict[user]["res"][1])
             
-        
+        elif temp_dict[user]["res"][0] == "ok":
+            bot.send_message(user, temp_dict[user]["res"][1])
+
     except:
 
         bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
         raise Exception("Ha ocurrido un error intentando ver la cuenta actual! ID usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
 
 
-    bot.send_message(user, temp_dict[user]["res"][1])
+
     
     return 
 

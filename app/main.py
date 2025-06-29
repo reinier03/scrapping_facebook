@@ -13,6 +13,7 @@ from pymongo import MongoClient
 from f_src import facebook_scrapper
 from f_src.usefull_functions import *
 import requests
+import shutil
 
 """
 -------------------------------------------------------
@@ -79,6 +80,35 @@ Envia /publicar para comenzar
 Bot desarrollado por @mistakedelalaif, las dudas o quejas, ir a consultárselas a él
 """)
     return
+
+@bot.message_handler(commands=["delete"])
+def cmd_delete(m):
+    temp_dict[m.from_user.id] = {}
+    temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, "La opción actual borrará la información que tengo de tu cuenta y tendrías que volver a ingresar todo desde cero nuevamente...\n\nEstás seguro que deseas hacerlo?", reply_markup=ReplyKeyboardMarkup(True, True).add("Si", "No"))
+
+    bot.register_next_step_handler(temp_dict[m.from_user.id]["msg"], borrar_question)
+
+
+def borrar_question(m):
+    if m.text.lower() == "si": 
+        bot.send_message(m.chat.id, "Muy bien, borraré todo lo que sé de ti")
+        
+        try:
+            collection.delete_one({"telegram_id": m.from_user.id})
+        except:
+            pass
+        try:
+            shutil.rmtree(user_folder(m.from_user.id))
+        except:
+            pass
+
+        bot.send_message(m.chat.id, "Ya se ha borrado todo exitosamente :-(")
+
+    else:
+        bot.send_message(m.chat.id, "Operación Cancelada con éxito :D")
+
+    return
+
 
 @bot.message_handler(commands=["cookies"])
 def cmd_cookies(m):
