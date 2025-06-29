@@ -656,7 +656,8 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
     #-----------------obtener usuario para loguin---------------
     try:
         wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
-        temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_email")
+        # temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_email")
+        temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, "input")[0]
 
     except:
         #a veces te puede salir este cartel en el inicio
@@ -674,7 +675,8 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
     
     #-----------------obtener password para loguin---------------
     wait.until(ec.visibility_of_element_located((By.ID, "m_login_password")))
-    temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_password")
+    # temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_password")
+    temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, "input")[1]
     
     if not temp_dict[user].get("password"):
         handlers(bot, user, "Introduce a continuación la contraseña", "password", temp_dict)
