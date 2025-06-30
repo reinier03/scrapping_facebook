@@ -174,7 +174,8 @@ def handlers(bot, user , msg ,info, temp_dict , **kwargs):
             temp_dict[user]["msg"] = bot.send_message(user, msg)
     
     
-    
+    temp_dict[user]["completed"] = False  
+
     match info:
         
         case "user":
@@ -229,6 +230,7 @@ def handlers(bot, user , msg ,info, temp_dict , **kwargs):
             break
     
 
+    
     temp_dict[user]["completed"] = False  
-
+    
     return
