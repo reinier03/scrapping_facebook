@@ -173,7 +173,6 @@ def handlers(bot, user , msg ,info, temp_dict , **kwargs):
         else:
             temp_dict[user]["msg"] = bot.send_message(user, msg)
     
-    temp_dict[user]["completed"] = False
     
     
     match info:
@@ -217,6 +216,7 @@ def handlers(bot, user , msg ,info, temp_dict , **kwargs):
             bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.correo_o_numero_verificacion, bot,user, info, temp_dict)
 
         case "email_verification":
+            
 
             bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.email_verification, bot,user, info, temp_dict)
             
@@ -227,6 +227,8 @@ def handlers(bot, user , msg ,info, temp_dict , **kwargs):
             
         else:
             break
-        
-        
+    
+
+    temp_dict[user]["completed"] = False  
+
     return
