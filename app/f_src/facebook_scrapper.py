@@ -601,8 +601,8 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
 
             
             bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura del email verification")
-            
-            handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta para finalizar el loguin...", "email_verification", temp_dict)
+
+            handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta para finalizar el loguin...","email_verification", temp_dict)
 
             driver.find_element(By.CSS_SELECTOR, 'input').send_keys(temp_dict[user]["res"])
 
@@ -646,14 +646,25 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura de comprobacion...Cambio la url a save-device?")
 
             #sustituto de remember_browser
-            if not "save-device" in driver.current_url:
+            try:
+                if driver.find_element(By.CSS_SELECTOR, 'div#screen-root'):
+                    
+                    bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
+            
+                    return ("ok", "se ha dado click en confiar dispositivo")
+            
+            except Exception as err:
+
+                if not "save-device" in driver.current_url:
                 
-                # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!", chat_id=user, message_id=temp_dict[user]["info"].message_id)  
                 
-                bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
-                
-                
-                return doble_auth(driver, user, bot)
+                    bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
+                    
+                    
+                    return doble_auth(driver, user, bot)
+
+
+                raise err
                 
             
 
