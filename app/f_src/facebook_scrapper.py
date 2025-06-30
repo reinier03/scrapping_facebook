@@ -887,57 +887,56 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                 
             
 
-            for i in range(3):
-
-                #esperar el botón de compartir
-                print("Buscaré el boton de compartir")
-                wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
-                
-                temp_dict[user]["contador"] = 0
-
-                while True:
-                    driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
-                    temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - 200).perform()
-
-                    time.sleep(4)
-
-                    try:
-
-                        driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
-                        temp_dict[user]["contador"] = 0
-                        break
-
-                    except Exception as err:
-                        temp_dict[user]["contador"] += 1
-
-                        if temp_dict[user]["contador"] >= 4:
-                            raise err
-
-                        driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
 
 
+            #esperar el botón de compartir
+            print("Buscaré el boton de compartir")
+            wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
+            
+            temp_dict[user]["contador"] = 0
 
+            while True:
+                driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+                temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - 200).perform()
 
-                #click en el boton de compartir en la publicacion
-                print("Le he dado click en el botón Compartir")
-                
+                time.sleep(4)
 
-                
                 try:
 
-                    temp_dict[user]["url_actual"] = driver.current_url
-
-                    #elemento de los grupos
-
-                    wait.until(ec.all_of(
-                        lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
-
-                        lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
-                    
+                    driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
+                    temp_dict[user]["contador"] = 0
                     break
 
-                except:
-                    pass
+                except Exception as err:
+                    temp_dict[user]["contador"] += 1
+
+                    if temp_dict[user]["contador"] >= 4:
+                        raise err
+
+                    driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+
+
+
+
+            #click en el boton de compartir en la publicacion
+            print("Le he dado click en el botón Compartir")
+            
+
+            
+            try:
+
+                temp_dict[user]["url_actual"] = driver.current_url
+
+                #elemento de los grupos
+
+                wait.until(ec.all_of(
+                    lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
+
+                    lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
+                
+
+            except:
+                pass
 
             
             temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
