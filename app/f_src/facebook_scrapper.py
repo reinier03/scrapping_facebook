@@ -617,7 +617,7 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             if wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4)):
 
                 doble_auth_codigo(driver, user, bot, temp_dict)
-
+                temp_dict[user]["doble"] = True
                 
         
         except:
@@ -627,15 +627,19 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             if wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))):
 
                 doble_auth_email_verification(driver, user, bot, temp_dict)
-
+                temp_dict[user]["doble"] = True
         
         except:
             pass
         
         
         finally:
-
+            if not temp_dict[user]["doble"]:
+                raise Exception("Abriste la funcion de doble autenticacion pero realmente no habia...que paso?")
+            
             try:
+                temp_dict[user]["doble"] = False
+
                 print("cambiar la url a la de save-device")
                 wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
                 print("ha cambiado!")
@@ -648,7 +652,7 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             #sustituto de remember_browser
             try:
                 if driver.find_element(By.CSS_SELECTOR, 'div#screen-root'):
-                    
+
                     bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
             
                     return ("ok", "se ha dado click en confiar dispositivo")
@@ -887,40 +891,32 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
                 #esperar el botón de compartir
                 print("Buscaré el boton de compartir")
-                try:
-                    wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
-                    
-                    temp_dict[user]["contador"] = 0
+                wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
+                
+                temp_dict[user]["contador"] = 0
 
-                    while True:
+                while True:
+                    driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+                    temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - 200).perform()
+
+                    time.sleep(4)
+
+                    try:
+
+                        driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
+                        temp_dict[user]["contador"] = 0
+                        break
+
+                    except Exception as err:
+                        temp_dict[user]["contador"] += 1
+
+                        if temp_dict[user]["contador"] >= 4:
+                            raise err
+
                         driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
-                        temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - 200).perform()
 
-                        time.sleep(4)
 
-                        try:
 
-                            driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
-                            temp_dict[user]["contador"] = 0
-                            break
-
-                        except Exception as err:
-                            temp_dict[user]["contador"] += 1
-
-                            if temp_dict[user]["contador"] >= 4:
-                                raise err
-
-                            driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
-
-                except Exception as err:
-
-                    if driver.current_url == "https://www.facebook.com/":
-                        info_message("¡Qué Pena!\nAl parecer, el enlace que proporcionaste caducó debido a que seguramente lo obtuviste hace mucho tiempo...\n\nVuelve a dicha publicación, copia el enlace y escribeme nuevamente /publicar para compartirlo :\n\n<b>La Operación ha sido cancelada</b>", bot, temp_dict, user)
-
-                        return ("no", "enlace caducado")
-
-                    else:
-                        raise err
 
                 #click en el boton de compartir en la publicacion
                 print("Le he dado click en el botón Compartir")
