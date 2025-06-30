@@ -73,9 +73,11 @@ def correo_o_numero_verificacion(m, bot:telebot.TeleBot ,user, info, temp_dict):
     return m.text
 
 
-def correo_o_numero_verificacion(m, bot:telebot.TeleBot ,user, info, temp_dict):
+def email_verification(m, bot:telebot.TeleBot ,user, info, temp_dict):
 
     temp_dict[user]["res"] = m.text
     temp_dict[user]["completed"] = True
 
     return m.text
+
+

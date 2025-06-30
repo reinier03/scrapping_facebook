@@ -509,23 +509,20 @@ def cookies_caducadas(driver, user, bot):
                 driver.back()
                 continue
 
-def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_url=True, **kwargs):
+def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kwargs):
     global temp_dict
     print("Estoy usando el loguin desde cero")
     
     temp_dict[user] = {}
     
-    def doble_auth(driver: seleniumbase.Driver , user, bot: telebot.TeleBot):
+    def doble_auth(driver: Chrome , user, bot: telebot.TeleBot):
         global temp_dict
+
+        def doble_auth_codigo(driver: Chrome , user, bot: telebot.TeleBot, temp_dict):
         # e = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
-        try:
-            wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4))
 
-            #elemento de 'Usar otro metodo' para elegir los codigos de seguridad
             try:
-                #Si este elemento no está es que aún está en el loguin debido a que los datos introducidos fueron incorrectos
-
-                
+                #Si este elemento no está es que aún está en el loguin debido a que los datos introducidos fueron incorrectos (es el mismo de arriba)
                 driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[3].click()
 
             except:
@@ -537,127 +534,138 @@ def loguin_cero(driver: seleniumbase.Driver, user, bot : telebot.TeleBot, load_u
                 del temp_dict[user]["password"]
 
                 return loguin_cero(driver, user, bot)
+            
+            
+            wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
+            
+            
+            wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
 
-        except:
-            #esto aparecerá si requiere una verificacion por correo
+            #aqui le doy click a el metodo de auth que en este caso sería por codigo de respaldo
+            driver.find_elements(By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')[3].click()
+
+            #le doy click a continuar
+            driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"][tabindex="0"]')[1].click()
+
+            #el siguiente elemento es el input en el que va el código
+            wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'input[inputmode="numeric"]')))
+            
+            temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, 'input[inputmode="numeric"]')
+            
+            
+            handlers(bot, user, "A continuación, introduce uno de los códigos de respaldo de Facebook\n\n(Estos códigos son de 8 dígitos numéricos y puedes obtenerlos en el centro de cuentas en los ajustes de tu cuenta de Facebook)" , "codigo_respaldo", temp_dict, markup=ForceReply())
+            
+            #para borrar los espacios en el codigo de respaldo
+            if re.search(r"\D", temp_dict[user]["res"].text):
+                temp_dict[user]["res"].text = temp_dict[user]["res"].text.replace(re.search(r"\D+", temp_dict[user]["res"].text).group(), "")
+
+            for i in temp_dict[user]["res"].text:
+                temp_dict[user]["e"].send_keys(i)
+                time.sleep(0.5)
+            
+            
+            print("he ingresado los códigos")
+            temp_dict[user]["url_actual"] = driver.current_url
+            
+
+            #click en el boton de continuar
+            driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[4].click()
+            print("click en el boton de continuar")
+            
+            
+            
             try:
-                if wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))):
-
-                    temp_dict[user]["url_actual"] = driver.current_url
+                #este mensaje se muestra cuando el código es incorrecto
+                if wait_s.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')) > 8)):
+                    bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto!\n\nEspera un momento para volver a intentarlo...")
                     
-                    driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
-
-                    handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta para finalizar el loguin...", "email_verification", temp_dict, makup=ReplyKeyboardMarkup)
-
-                    driver.find_element(By.CSS_SELECTOR, 'input').send_keys(temp_dict[user]["res"])
-
-                    bot.send_message(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura del email verification")
-
-                    driver.find_element(By.XPATH, '//*[contains(text(), "Continue")]').click()
-
-                    print("cambiar la url a la de save-device")
-                    wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
-
-                    #click en confiar en este dispositivo
-                    try:
-                        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
-                        driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
-
-                    except:
-                        raise Exception("Error al terminar de ingresar el codigo del correo")
-
-                    # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto", chat_id=user, message_id=temp_dict[user]["info"].message_id)     
-                    
-                    bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
-                    
-                    return ("ok", "se ha dado click en confiar dispositivo")
-
+                    return loguin_cero(driver, user, bot)
                     
             except:
-                raise Exception("ID usuario: " + str(user) + "\n\nNo se ha podido dar click en el botón de doble autenticación")
-        
-        wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
-        
-        
-        wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
-
-        #aqui le doy click a el metodo de auth que en este caso sería por codigo de respaldo
-        driver.find_elements(By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')[3].click()
-
-        #le doy click a continuar
-        driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"][tabindex="0"]')[1].click()
-
-        #el siguiente elemento es el input en el que va el código
-        wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'input[inputmode="numeric"]')))
-        
-        temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, 'input[inputmode="numeric"]')
-        
-        
-        handlers(bot, user, "A continuación, introduce uno de los códigos de respaldo de Facebook\n\n(Estos códigos son de 8 dígitos numéricos y puedes obtenerlos en el centro de cuentas en los ajustes de tu cuenta de Facebook)" , "codigo_respaldo", temp_dict, markup=ForceReply())
-        
-        #para borrar los espacios en el codigo de respaldo
-        if re.search(r"\D", temp_dict[user]["res"].text):
-            temp_dict[user]["res"].text = temp_dict[user]["res"].text.replace(re.search(r"\D+", temp_dict[user]["res"].text).group(), "")
-
-        for i in temp_dict[user]["res"].text:
-            temp_dict[user]["e"].send_keys(i)
-            time.sleep(0.5)
-        
-           
-        print("he ingresado los códigos")
-        temp_dict[user]["url_actual"] = driver.current_url
+                pass
+            
+            # #esperar a que no esté el botón
+            # wait.until(ec.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="xod5an3 xg87l8a"]')))
+            
+            
+            
+            
+            return "ok"
         
 
-        #click en el boton de continuar
-        driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[4].click()
-        print("click en el boton de continuar")
-        
-        
-        
+        def doble_auth_email_verification(driver: Chrome, user, bot, temp_dict):
+            
+            temp_dict[user]["url_actual"] = driver.current_url
+                    
+            driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
+
+            
+
+            handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta para finalizar el loguin...", "email_verification", temp_dict)
+
+            driver.find_element(By.CSS_SELECTOR, 'input').send_keys(temp_dict[user]["res"])
+
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura del email verification")
+
+            driver.find_element(By.XPATH, '//*[contains(text(), "Continue")]').click()
+
+            return "ok"
+
+
         try:
-            #este mensaje se muestra cuando el código es incorrecto
-            if wait_s.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')) > 8)):
-                bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto!\n\nEspera un momento para volver a intentarlo...")
+            if wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4)):
+
+                doble_auth_codigo(driver, user, bot, temp_dict)
+
                 
-                return loguin_cero(driver, user, bot)
-                
+        
         except:
             pass
-        
-        # #esperar a que no esté el botón
-        # wait.until(ec.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="xod5an3 xg87l8a"]')))
-           
-        try:
-            print("cambiar la url a la de save-device")
-            wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
-            print("ha cambiado!")
 
+        try:
+            if wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))):
+
+                doble_auth_email_verification(driver, user, bot, temp_dict)
+
+        
         except:
             pass
         
         
-        #sustituto de remember_browser
-        if not "save-device" in driver.current_url:
-            
-            # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!", chat_id=user, message_id=temp_dict[user]["info"].message_id)  
-            
-            bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
-            
-            driver.refresh()
-            return doble_auth(driver, user, bot)
-            
-        
+        finally:
 
-        
-        #click en confiar en este dispositivo
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
-        driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
+            try:
+                print("cambiar la url a la de save-device")
+                wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
+                print("ha cambiado!")
 
-        # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto", chat_id=user, message_id=temp_dict[user]["info"].message_id)     
-        
-        bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
-        
-        return ("ok", "se ha dado click en confiar dispositivo")
+            except:
+                pass
+
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura de comprobacion...Cambio la url a save-device?")
+
+            #sustituto de remember_browser
+            if not "save-device" in driver.current_url:
+                
+                # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!", chat_id=user, message_id=temp_dict[user]["info"].message_id)  
+                
+                bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
+                
+                
+                return doble_auth(driver, user, bot)
+                
+            
+
+            
+            #click en confiar en este dispositivo
+            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
+            driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
+
+            # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto", chat_id=user, message_id=temp_dict[user]["info"].message_id)     
+            
+            bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
+            
+            return ("ok", "se ha dado click en confiar dispositivo")
                 
 
             

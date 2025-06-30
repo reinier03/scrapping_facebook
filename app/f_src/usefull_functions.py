@@ -215,6 +215,10 @@ def handlers(bot, user , msg ,info, temp_dict , **kwargs):
         case "correo_o_numero_verificacion":
             
             bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.correo_o_numero_verificacion, bot,user, info, temp_dict)
+
+        case "email_verification":
+
+            bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.email_verification, bot,user, info, temp_dict)
             
             
     while True:
