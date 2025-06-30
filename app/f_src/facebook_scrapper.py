@@ -599,14 +599,12 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
                     
             driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
 
-            
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura del email verification")
+            temp_dict[user]["email"] = driver.find_element(By.XPATH, '//*[contains(text(), "**")]').text
 
-            handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta para finalizar el loguin...","email_verification", temp_dict)
+            handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta =>" + temp_dict[user]["email"] + "<= para finalizar el loguin...","email_verification", temp_dict)
 
             driver.find_element(By.CSS_SELECTOR, 'input').send_keys(temp_dict[user]["res"])
 
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura del email verification")
 
             driver.find_element(By.XPATH, '//*[contains(text(), "Continue")]').click()
 
@@ -647,7 +645,6 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             except:
                 pass
 
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura de comprobacion...Cambio la url a save-device?")
 
             #sustituto de remember_browser
             try:
