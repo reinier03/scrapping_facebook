@@ -600,7 +600,8 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
 
             
-
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver,user)), "Captura del email verification")
+            
             handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta para finalizar el loguin...", "email_verification", temp_dict)
 
             driver.find_element(By.CSS_SELECTOR, 'input').send_keys(temp_dict[user]["res"])
