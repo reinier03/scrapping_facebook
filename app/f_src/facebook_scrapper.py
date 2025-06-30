@@ -599,7 +599,7 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
                     
             driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
 
-            temp_dict[user]["email"] = driver.find_element(By.XPATH, '//*[contains(text(), "**")]').text
+            temp_dict[user]["email"] = driver.find_element(By.XPATH, '//*[contains(text(), "*")]').text
 
             handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta =>" + temp_dict[user]["email"] + "<= para finalizar el loguin...","email_verification", temp_dict)
 
@@ -888,87 +888,98 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
             #esperar el botón de compartir
             print("Buscaré el boton de compartir")
-            wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
+            try:
+
+                if temp_dict[user]["lista_grupos"]:
+                    WebDriverWait(driver, 10).until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
+
+                else:
+                    wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
+
+            except:
+                #si no regresa...
+                WebDriverWait(driver, 10).until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
+
+            else:
             
-            temp_dict[user]["contador"] = 0
+            
+                temp_dict[user]["contador"] = 0
 
-            while True:
-                driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
-                temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - 200).perform()
+                while True:
+                    driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+                    temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - 200).perform()
 
-                time.sleep(4)
+                    time.sleep(4)
 
+                    try:
+
+                        driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
+                        temp_dict[user]["contador"] = 0
+                        break
+
+                    except Exception as err:
+                        temp_dict[user]["contador"] += 1
+
+                        if temp_dict[user]["contador"] >= 4:
+                            raise err
+
+                        driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+
+
+
+
+                #click en el boton de compartir en la publicacion
+                print("Le he dado click en el botón Compartir")
+                
+
+                
                 try:
 
-                    driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
-                    temp_dict[user]["contador"] = 0
+                    temp_dict[user]["url_actual"] = driver.current_url
+
+                    #elemento de los grupos
+
+                    wait.until(ec.all_of(
+                        lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
+
+                        lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
+                    
+
+                except:
+                    pass
+
+                
+                temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
+
+                #click en compartir en grupos
+                time.sleep(8)
+                temp_dict[user]["e"].click()
+
+                try:
+                    WebDriverWait(driver, 5).until(ec.invisibility_of_element_located(temp_dict[user]["e"]))
+                except:
+                    pass
+                
+                print("Click en Compartir Grupos")
+                
+                #esperar lista de grupos
+                try:
+                    print("Esperando lista de grupos visibles")
+
                     break
-
+                    
                 except Exception as err:
-                    temp_dict[user]["contador"] += 1
 
-                    if temp_dict[user]["contador"] >= 4:
-                        raise err
+                    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
 
-                    driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+                    raise err
 
-
-
-
-            #click en el boton de compartir en la publicacion
-            print("Le he dado click en el botón Compartir")
-            
-
-            
             try:
-
-                temp_dict[user]["url_actual"] = driver.current_url
-
-                #elemento de los grupos
-
-                wait.until(ec.all_of(
-                    lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
-
-                    lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
-                
+                print("Url a cambiar: {}\nUrl actual: ".format(temp_dict[user]["url_actual"]), driver.current_url)
+                wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
 
             except:
                 pass
-
-            
-            temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
-
-            #click en compartir en grupos
-            time.sleep(8)
-            temp_dict[user]["e"].click()
-
-            try:
-                WebDriverWait(driver, 5).until(ec.invisibility_of_element_located(temp_dict[user]["e"]))
-            except:
-                pass
-            
-            print("Click en Compartir Grupos")
-            
-            #esperar lista de grupos
-            try:
-                print("Esperando lista de grupos visibles")
-
-                #elemento padre de los grupos
-                # wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
-                break
-                
-            except Exception as err:
-
-                bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
-
-                raise err
-
-        try:
-            print("Url a cambiar: {}\nUrl actual: ".format(temp_dict[user]["url_actual"]), driver.current_url)
-            wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
-
-        except:
-            pass
 
         #obtener grupos
         print("Obteniendo grupos")
