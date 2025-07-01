@@ -10,7 +10,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import Chrome
 
 
-def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elemento, pasos: int, esperar = 2):
+def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elemento, pasos: int, esperar = 1.3):
 
     #a partir de los ultimos 11 elementos el scroll es inútil
     if len(grupos) <= 11 or pasos == 0:
@@ -19,7 +19,7 @@ def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elem
 
         return "ok"
 
-    temp_dict[user]["y_scroll"] = (elemento.location["y"] - 100) // pasos
+    temp_dict[user]["y_scroll"] = (elemento.location["y"] - 200) // pasos
     
 
     for i in range(pasos):

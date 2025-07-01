@@ -981,7 +981,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             
             #por alguna razón, cuando lo pruebo en el debugger esta linea me da error con la variable 'temp_dict[user]["lista_grupos"]' que almacena los grupos asi que lo pongo en un try-except
             
-            hacer_scroll(driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][-1], (contador + 1) // 2)
+            hacer_scroll(driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][-1], (contador + 1) // 6)
 
             
             
@@ -1017,7 +1017,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         # temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
 
 
-        hacer_scroll(driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][contador], (contador + 1) // 2)
+        hacer_scroll(driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][contador], (contador + 1) // 6)
         
 
         temp_dict[user]["publicacion"]["nombre"] = temp_dict[user]["lista_grupos"][contador].text
