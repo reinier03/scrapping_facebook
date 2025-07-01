@@ -1032,7 +1032,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         except:
             print("Error intentando clickear en el grupo? Lo volveré a intentar")
             temp_dict[user]["a"].scroll_to_element(temp_dict[user]["lista_grupos"][contador]).perform()
-            temp_dict[user]["a"].scroll_from_origin(ScrollOrigin.from_element(temp_dict[user]["lista_grupos"][contador]), 0 , -200)
+            temp_dict[user]["a"].scroll_from_origin(ScrollOrigin.from_element(temp_dict[user]["lista_grupos"][contador]), 0 , -200).perform()
             temp_dict[user]["lista_grupos"][contador].click()
 
         
