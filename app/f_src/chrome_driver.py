@@ -37,8 +37,8 @@ def anadir_opciones(o, container=False, mobile=False):
         
     if container:
         o.add_argument("--headless=new")
-        # o.add_argument("--disable-dev-shm-usage")
-        # o.add_argument("--disable-gpu")
+        o.add_argument("--disable-dev-shm-usage")
+        o.add_argument("--disable-gpu")
         pass
 
     if mobile:
