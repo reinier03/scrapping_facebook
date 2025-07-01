@@ -881,16 +881,20 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         #         raise Exception("Facebook me bloqueó?")
             
         
-
+        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
 
 
         #esperar el botón de compartir
         print("Buscaré el boton de compartir")
+        try:
+            temp_dict[user]["res"] = {1: WebDriverWait(driver, 5).until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))}
 
-        temp_dict[user]["res"] = wait.until(ec.any_of(lambda driver: driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]'), lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
+        except:
+            temp_dict[user]["res"] = {2: WebDriverWait(driver, 5).until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-type="vscroller"]')))}
+
             
         #elemento de compartir existe
-        if temp_dict[user]["res"][0] == True:       
+        if temp_dict[user]["res"].get(1):       
         
             temp_dict[user]["contador"] = 0
 
