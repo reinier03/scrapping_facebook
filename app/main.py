@@ -75,7 +75,8 @@ HOLA :D
 ¿Te parece tedioso estar re publicando por TODOS tus grupos en Facebook?
 No te preocupes, yo me encargo por ti ;)
 
-Envia /publicar para comenzar
+<u>Lista de Comandos</u>:
+<b>/info</b> para obtener más información de las publicaciones
 
 Bot desarrollado por @mistakedelalaif, las dudas o quejas, ir a consultárselas a él
 """)
@@ -136,19 +137,13 @@ def capturar_archivo(m):
             
 
 
-@bot.message_handler(commands=["publicar"])
+@bot.message_handler(commands=["info"])
 def cmd_publish(m):
     global cola
     
-    if cola["uso"]:
-        bot.send_message(m.chat.id, "Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible")
-        
-        if not m.from_user.id in cola["cola"]:
-            cola["cola"].append(m.from_user.id)
-            
-        return
     
-    texto = (
+    
+    bot.send_message(m.chat.id,
 """A continuación ve a Facebook y sigue estos pasos para compartir la publicacion
 
 1 - Selecciona la publicación
@@ -156,97 +151,89 @@ def cmd_publish(m):
 3 - Luego en el menú que aparece dale a 'Obtener Enlace'
 4 - Pega dicho enlace en el siguiente mensaje y envíamelo
 
-Ahora enviame el enlace de la publicación
+Ahora enviame el enlace de la publicación aquí y me ocuparé del resto ;)
 """)
     
-    temp_dict[m.from_user.id] = {}
-    temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, texto, reply_markup=telebot.types.ReplyKeyboardMarkup(True, True).add("Cancelar"))
-    bot.register_next_step_handler(temp_dict[m.from_user.id]["msg"], get_url, texto)
     
     
-def get_url(m, texto):
-    global cola
-    
-    if m.text.lower() == "cancelar":
-        bot.send_message(m.chat.id, "Muy bien, operación cancelada exitosamente :)", reply_markup=telebot.types.ReplyKeyboardRemove())
-        return
 
-    if cola["uso"]:
-        bot.send_message(m.chat.id ,"Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible", reply_markup=telebot.types.ReplyKeyboardRemove())
+@bot.message_handler(func=lambda x: True)
+def cmd_any(m):
+    if m.text.lower().startswith("https://www.facebook.com"):
+        if cola["uso"]:
+            bot.send_message(m.chat.id, "Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible")
         
         if not m.from_user.id in cola["cola"]:
             cola["cola"].append(m.from_user.id)
             
-        return
+            return
     
-    
-    if not m.text.lower().startswith("https://www.facebook.com"):
-        temp_dict[m.from_user.id] = {}
-        temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, f"Este enlace no es de Facebook! Inténtalo de nuevo...\n\n{texto}")
-        
-        return bot.register_next_step_handler(temp_dict[m.from_user.id]["msg"], get_url, texto)
-    
-    
-    try:
-        cola["uso"] = True
-        if not m.from_user.id in cola["cola"]:
-            cola["cola"].insert(0, m.from_user.id)
-        
-        try:
-            facebook_scrapper.main(bot, m.from_user.id , m.text)
-            
-        except Exception as e:
-            print("Ha ocurrido un error! Revisa el bot, te dará más detalles")
-            if isinstance(e.args, tuple):
-                if "no" == str(e.args).lower():
-                    pass
-                
-                else:
-                    bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(e.args[0]) + "</blockquote>")
 
-            else:
-                bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(e.args) + "</blockquote>")
+        if cola["uso"]:
+            bot.send_message(m.chat.id ,"Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible", reply_markup=telebot.types.ReplyKeyboardRemove())
+            
+            if not m.from_user.id in cola["cola"]:
+                cola["cola"].append(m.from_user.id)
+                
+            return
+
         
         
-            
-        
-            
-            
-    except:
         try:
-            bot.send_message(m.chat.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + format_exc() + "</blockquote>")
+            cola["uso"] = True
+            if not m.from_user.id in cola["cola"]:
+                cola["cola"].insert(0, m.from_user.id)
             
+            try:
+                facebook_scrapper.main(bot, m.from_user.id , m.text)
+                
+            except Exception as e:
+                print("Ha ocurrido un error! Revisa el bot, te dará más detalles")
+                if isinstance(e.args, tuple):
+                    if "no" == str(e.args).lower():
+                        pass
+                    
+                    else:
+                        bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(e.args[0]) + "</blockquote>")
+
+                else:
+                    bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(e.args) + "</blockquote>")
+            
+            
+                
+            
+                
+                
         except:
             try:
-                with open(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"), "w") as file:
-                    file.write(f"Ha ocurrido un error inesperado!\nID del usuario: {m.from_user.id}\n\n{format_exc()}")
-                    
-                with open(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"), "r") as file:
-                    bot.send_document(m.from_user.id, telebot.types.InputFile(file, file_name="error_" + str(m.from_user.id) + ".txt"))
-                    
-                os.remove(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"))
+                bot.send_message(m.chat.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + format_exc() + "</blockquote>")
                 
             except:
                 try:
-                    bot.send_message(m.chat.id, "Ha ocurrido un error fatal")
-                except:
-                    print("ERROR FATAL:\nHe perdido la conexion a telegram :(")
+                    with open(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"), "w") as file:
+                        file.write(f"Ha ocurrido un error inesperado!\nID del usuario: {m.from_user.id}\n\n{format_exc()}")
+                        
+                    with open(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"), "r") as file:
+                        bot.send_document(m.from_user.id, telebot.types.InputFile(file, file_name="error_" + str(m.from_user.id) + ".txt"))
+                        
+                    os.remove(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"))
                     
-                
-                
-    
-    cola["uso"] = False      
-    
-    if m.from_user.id in cola["cola"]:
-        cola["cola"].remove(m.from_user.id)
-    
-    bot.send_message(m.chat.id, "Operación Terminada")
-    print("He terminado con: " + str(m.from_user.id))
-
-@bot.message_handler(func=lambda x: True)
-def cmd_any(m):
-    bot.send_message(m.chat.id, m.text)
-    
+                except:
+                    try:
+                        bot.send_message(m.chat.id, "Ha ocurrido un error fatal")
+                    except:
+                        print("ERROR FATAL:\nHe perdido la conexion a telegram :(")
+                        
+                    
+                    
+        
+        cola["uso"] = False      
+        
+        if m.from_user.id in cola["cola"]:
+            cola["cola"].remove(m.from_user.id)
+        
+        bot.send_message(m.chat.id, "Operación Terminada")
+        print("He terminado con: " + str(m.from_user.id))
     
 
 app = Flask(__name__)
