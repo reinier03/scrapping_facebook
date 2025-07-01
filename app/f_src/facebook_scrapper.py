@@ -956,7 +956,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             
             
 
-            print("Url a cambiar: {}\nUrl actual: ".format(temp_dict[user]["url_actual"]), driver.current_url)
+            print("Url a cambiar: " + temp_dict[user]["url_actual"] +  "\nUrl actual: " + driver.current_url)
             wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
 
 
