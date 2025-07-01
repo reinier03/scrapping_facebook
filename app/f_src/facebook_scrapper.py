@@ -1108,7 +1108,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             
             wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]')))
 
-            temp_dict[user]["res"] = ("ok", driver.find_element(By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]'))
+            temp_dict[user]["res"] = ("ok", driver.find_elements(By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]')[4])
             
         except:
             temp_dict[user]["res"] = ("error", "NO se pudo localizar el boton para publicar en los grupos")

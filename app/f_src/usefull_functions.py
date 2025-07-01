@@ -19,7 +19,8 @@ def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elem
 
         return "ok"
 
-    temp_dict[user]["y_scroll"] = (elemento.location["y"] - 200) // pasos
+    temp_dict[user]["y_scroll"] = elemento.location["y"] - (elemento.rect["height"] * 3)
+    temp_dict[user]["y_scroll"] = temp_dict[user]["y_scroll"] // pasos
     
 
     for i in range(pasos):
