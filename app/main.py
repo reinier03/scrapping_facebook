@@ -28,7 +28,6 @@ webhook_url = Si esta variable es definida se usará el metodo webhook, sino pue
 
 temp_dict = {}
 cola = {}
-cola["cola"] = []
 cola["uso"] = False
 admin = os.environ["admin"]
 
@@ -158,31 +157,19 @@ Ahora enviame el enlace de la publicación aquí y me ocuparé del resto ;)
     
 
 @bot.message_handler(func=lambda x: True)
-def cmd_any(m):
-    if m.text.lower().startswith("https://www.facebook.com"):
-        if cola["uso"]:
-            bot.send_message(m.chat.id, "Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible")
+def get_work(m):
+    if m.text.lower().startswith("https://www.facebook.com"):            
         
-        if not m.from_user.id in cola["cola"]:
-            cola["cola"].append(m.from_user.id)
-            
-            return
-    
-
         if cola["uso"]:
-            bot.send_message(m.chat.id ,"Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado, te avisaré cuando ya esté disponible", reply_markup=telebot.types.ReplyKeyboardRemove())
+            bot.send_message(m.chat.id, "Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado\n\n<b>Te notificaré cuando esté disponible</b>")           
             
-            if not m.from_user.id in cola["cola"]:
-                cola["cola"].append(m.from_user.id)
-                
+
             return
 
         
         
         try:
             cola["uso"] = True
-            if not m.from_user.id in cola["cola"]:
-                cola["cola"].insert(0, m.from_user.id)
             
             try:
                 facebook_scrapper.main(bot, m.from_user.id , m.text)
@@ -229,11 +216,13 @@ def cmd_any(m):
         
         cola["uso"] = False      
         
-        if m.from_user.id in cola["cola"]:
-            cola["cola"].remove(m.from_user.id)
         
         bot.send_message(m.chat.id, "Operación Terminada")
         print("He terminado con: " + str(m.from_user.id))
+
+    else:
+        bot.send_message(m.chat.id, "Eso no es un enlace de Facebook\n\nPresiona /info para saber cómo usarme!")
+        return
     
 
 app = Flask(__name__)

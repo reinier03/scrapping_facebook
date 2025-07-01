@@ -23,7 +23,7 @@ def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elem
     temp_dict[user]["y_scroll"] = temp_dict[user]["y_scroll"] // pasos
     
 
-    for i in range(pasos):
+    for i in range(int(pasos)):
 
 
         temp_dict[user]["a"].scroll_by_amount(0, temp_dict[user]["y_scroll"]).perform()
