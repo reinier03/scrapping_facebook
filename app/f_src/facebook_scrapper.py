@@ -900,7 +900,19 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
             while True:
                 driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
-                temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - 200).perform()
+
+                
+                try:
+                    print("buscando el elemento de compartir...")
+                    temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').rect["height"] * 4).perform()
+
+                except:
+                    wait_s.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(text(), "feed")]')))
+
+                    print("La página está corrupta, volveré a cargarla")
+                    temp_dict[user]["cargar"] = True
+
+                    return publicacion(driver, bot, url, user, contador = contador, kwargs=kwargs)
 
                 time.sleep(4)
 
@@ -940,8 +952,11 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             except:
                 pass
 
-            
-            temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
+            try:
+                temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
+
+            except IndexError:
+                temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_element(By.XPATH, '//*[contains(text(), "gr")]')
 
             #click en compartir en grupos
             time.sleep(8)
@@ -1136,6 +1151,9 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         
         
         contador += 1
+
+        if temp_dict[user].get("cargar"):
+            return publicacion(driver, bot, url, user, contador = contador, kwargs=kwargs)
             
                   
                 
