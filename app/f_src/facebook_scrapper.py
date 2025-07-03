@@ -1,4 +1,4 @@
-from main_classes import scrapper as s
+from f_src.main_classes import scrapper as s
 import f_src.bot_handlers
 from f_src.chrome_driver import *
 import f_src
