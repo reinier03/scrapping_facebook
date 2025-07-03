@@ -608,7 +608,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
 
         try:
             if scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4)):
-
+                print("Haremos la doble autenticación con los códigos de recuperación")
                 doble_auth_codigo(scrapper, user, bot, temp_dict)
                 temp_dict[user]["doble"] = True
                 
@@ -618,7 +618,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
 
         try:
             if scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))):
-
+                print("Haremos la doble autenticación enviando el código al correo")
                 doble_auth_email_verification(scrapper, user, bot, temp_dict)
                 temp_dict[user]["doble"] = True
         
@@ -627,7 +627,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         
         
         finally:
-            if not temp_dict[user]["doble"]:
+            if not temp_dict[user].get("doble"):
                 raise Exception("Abriste la funcion de doble autenticacion pero realmente no habia...que paso?")
             
             try:
