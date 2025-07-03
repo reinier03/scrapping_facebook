@@ -909,7 +909,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                 #hay veces que la página se corrompe y no existe dicha publicación, con esto lo controlo iniciando un valor para cargar nuevamente la página
                 except:
                     print("La página está corrupta, buscaré el elemento 'feed'")
-                    wait_s.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(text(), "feed")]')))
+                    wait_s.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "feed")]')))
                     
 
                     print("Encontré el elemento, volveré a cargarla")
