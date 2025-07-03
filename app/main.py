@@ -1,3 +1,5 @@
+import requests
+import shutil
 import os
 import telebot
 from telebot.types import *
@@ -12,8 +14,7 @@ import subprocess
 from pymongo import MongoClient
 from f_src import facebook_scrapper
 from f_src.usefull_functions import *
-import requests
-import shutil
+from f_src.main_classes import scrapper as s
 
 """
 -------------------------------------------------------
@@ -41,6 +42,7 @@ else:
 cliente = MongoClient(MONGO_URL)
 db = cliente["face"]
 collection = db["usuarios"]
+scrapper = s()
 
 
 telebot.apihelper.ENABLE_MIDDLEWARE = True
@@ -76,6 +78,7 @@ No te preocupes, yo me encargo por ti ;)
 
 <u>Lista de Comandos</u>:
 <b>/info</b> para obtener más información de las publicaciones
+<b>/delete</b> - Para cerrar la cuenta actual y poder hacer loguin con una diferente
 
 Bot desarrollado por @mistakedelalaif, las dudas o quejas, ir a consultárselas a él
 """)
@@ -85,6 +88,7 @@ Bot desarrollado por @mistakedelalaif, las dudas o quejas, ir a consultárselas 
 def cmd_delete(m):
     temp_dict[m.from_user.id] = {}
     temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, "La opción actual borrará la información que tengo de tu cuenta y tendrías que volver a ingresar todo desde cero nuevamente...\n\nEstás seguro que deseas hacerlo?", reply_markup=ReplyKeyboardMarkup(True, True).add("Si", "No"))
+    
 
     bot.register_next_step_handler(temp_dict[m.from_user.id]["msg"], borrar_question)
 
@@ -92,6 +96,9 @@ def cmd_delete(m):
 def borrar_question(m):
     if m.text.lower() == "si": 
         bot.send_message(m.chat.id, "Muy bien, borraré todo lo que sé de ti")
+        
+        for i in collection.find_one({"telegram_id": m.from_user.id})["cookies"]:
+            scrapper.driver.delete_cookie(i)
         
         try:
             collection.delete_one({"telegram_id": m.from_user.id})
@@ -101,6 +108,7 @@ def borrar_question(m):
             shutil.rmtree(user_folder(m.from_user.id))
         except:
             pass
+        
 
         bot.send_message(m.chat.id, "Ya se ha borrado todo exitosamente :-(")
 
@@ -172,7 +180,7 @@ def get_work(m):
             cola["uso"] = True
             
             try:
-                facebook_scrapper.main(bot, m.from_user.id , m.text)
+                facebook_scrapper.main(scrapper, bot, m.from_user.id , m.text)
                 
             except Exception as e:
                 print("Ha ocurrido un error! Revisa el bot, te dará más detalles")

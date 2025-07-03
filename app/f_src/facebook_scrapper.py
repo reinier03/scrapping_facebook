@@ -1,3 +1,4 @@
+from main_classes import scrapper as s
 import f_src.bot_handlers
 from f_src.chrome_driver import *
 import f_src
@@ -33,11 +34,6 @@ else:
 
 
 
-driver = uc_driver(True)
-
-
-    
-wait = WebDriverWait(driver, 30)
 cliente = MongoClient(MONGO_URL)
 db = cliente["face"]
 collection = db["usuarios"]
@@ -45,8 +41,7 @@ collection = db["usuarios"]
 
 
 temp_dict = {}
-wait_s = WebDriverWait(driver, 8)
-# {"id_": random, "telegram_id": 1747104645, "user" : "example@gmail.com", cookies : cookies_binary}
+# {"id_": random, "telegram_id": 1747104645, "user" : "example@gmail.com", cookies : cookies_dict}
 
 
 
@@ -54,7 +49,7 @@ wait_s = WebDriverWait(driver, 8)
 
 
     
-def esperar(etiqueta, elementos, intentos=6):
+def esperar(scrapper: s, etiqueta, elementos, intentos=6):
     '''
     Esta funcion se asegura de que los elementos están disponibles en el DOM
     si no se cumplen las condiciones, se espera 5 segundos y se vuelve a intentar
@@ -62,7 +57,7 @@ def esperar(etiqueta, elementos, intentos=6):
     contador = 1
     while True:
         try:
-            e = wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, etiqueta)) >= elementos + 1))
+            e = scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, etiqueta)) >= elementos + 1))
             
         except IndexError:
             if contador >= intentos:
@@ -75,7 +70,7 @@ def esperar(etiqueta, elementos, intentos=6):
         finally:
             try:
                 if e == True:
-                    return ("ok", driver.find_elements(By.CSS_SELECTOR, etiqueta)[elementos])
+                    return ("ok", scrapper.driver.find_elements(By.CSS_SELECTOR, etiqueta)[elementos])
             
             except:
                 pass
@@ -92,11 +87,11 @@ def esperar(etiqueta, elementos, intentos=6):
 
     
 
-def guardar_cookies(driver, user, **kwargs):
+def guardar_cookies(scrapper: s, user, **kwargs):
     
     global temp_dict
     try:
-        temp_dict[user]["dict_cookies"] = cargar_cookies(driver, user, hacer_loguin=False)
+        temp_dict[user]["dict_cookies"] = cargar_cookies(scrapper, user, hacer_loguin=False)
         
         if isinstance(temp_dict[user]["dict_cookies"], Exception):
             temp_dict[user]["dict_cookies"] = ("error", e.args[0])
@@ -124,13 +119,13 @@ def guardar_cookies(driver, user, **kwargs):
                 for key, value in kwargs.items():
                     temp_dict[user]["dic"][key] = value
                 
-                temp_dict[user]["dic"]["cookies"] = driver.get_cookies()
+                temp_dict[user]["dic"]["cookies"] = scrapper.driver.get_cookies()
 
 
                 dill.dump(temp_dict[user]["dic"], file_cookies)
                 
         else:
-            temp_dict[user]["dic"]["cookies"] = driver.get_cookies()
+            temp_dict[user]["dic"]["cookies"] = scrapper.driver.get_cookies()
 
 
             dill.dump(temp_dict[user]["dic"], file_cookies)
@@ -156,14 +151,14 @@ def guardar_cookies(driver, user, **kwargs):
 
 
 
-def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
+def cargar_cookies(scrapper: s, user, bot=False , hacer_loguin=True):
     
     
     #si hay cookies
     if list(filter(lambda file: "cookies.pkl" in file, os.listdir(user_folder(user)))):
         
         if hacer_loguin:
-            driver.get("https://facebook.com/robots.txt")
+            scrapper.driver.get("https://facebook.com/robots.txt")
         
         with open(os.path.join(user_folder(user), "cookies.pkl"), "rb") as file_cookies:
             try:
@@ -177,7 +172,7 @@ def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
             
             
             for cookie in temp_dict[user]["cookies_dict"]["cookies"]:
-                driver.add_cookie(cookie)
+                scrapper.driver.add_cookie(cookie)
                     
                              
     else:
@@ -187,7 +182,7 @@ def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
             if temp_dict[user]["res"]:
                 #loguin por cookies
                 if hacer_loguin:
-                    driver.get("https://facebook.com/robots.txt")
+                    scrapper.driver.get("https://facebook.com/robots.txt")
                     
                 with open(os.path.join(user_folder(user), "cookies.pkl"), "wb") as cookies:
                     cookies.write(temp_dict[user]["res"])
@@ -199,7 +194,7 @@ def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
                         return ("ok", temp_dict[user]["cookies_dict"])
                     
                     for cookies in temp_dict[user]["cookies_dict"]["cookies"]:
-                        driver.add_cookie(cookies)
+                        scrapper.driver.add_cookie(cookies)
                         
                         
             
@@ -219,63 +214,63 @@ def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
         #Porqué lo pongo en un while True? porque vivo en Cuba :( MI conexion a internet es lentisima entonces si no controlo esto arrojara un timeout
         if os.name == "nt":
             try:
-                driver.get("https://facebook.com")
+                scrapper.driver.get("https://facebook.com")
             except:
                 pass
             
             while True:
                 
                 try:
-                    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+                    scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
                     break
                 except:
                     pass
                 
         else:
-            driver.get("https://facebook.com")
+            scrapper.driver.get("https://facebook.com")
         
             
         # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nMuy Bien, Ya accedí a Facebook :D", chat_id=user, message_id=temp_dict[user]["info"].message_id)
         
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
 
         try:
             #podria salir un recuadro para elegir el perfil
-            if len(driver.find_element(By.CSS_SELECTOR, 'img[data-type="image"][class="img contain"]')) == 4:
+            if len(scrapper.driver.find_element(By.CSS_SELECTOR, 'img[data-type="image"][class="img contain"]')) == 4:
 
                 #Aqui elijo el perfil
-                driver.find_element(By.CSS_SELECTOR, 'div[tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m bg-s5"]').click()
+                scrapper.driver.find_element(By.CSS_SELECTOR, 'div[tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m bg-s5"]').click()
 
-                wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="password"]')))
+                scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="password"]')))
                 
                 with open(os.path.join(user_folder(user), "cookies.pkl"), "rb") as file_cookies:
                     
                     temp_dict[user]["password"] = dill.load(file_cookies)["password"]
 
                     for i in temp_dict[user]["password"]:
-                        driver.find_element(By.CSS_SELECTOR, 'input[type="password"]').send_keys(i)
+                        scrapper.driver.find_element(By.CSS_SELECTOR, 'input[type="password"]').send_keys(i)
 
                         time.sleep(0.5)
 
                     #click en continuar
-                    driver.find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-tti-phase="-1"][data-focusable="true"][data-type="container"][tabindex="0"]')[1].click()
+                    scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-tti-phase="-1"][data-focusable="true"][data-type="container"][tabindex="0"]')[1].click()
 
                     #saldra un cartel de doble autenticacion obligatoria
                     #en este punto, si el usuario ya confirmo una doble autenticacion anteriormente, facebook ira directamente a la main page y no requerirá verificacion
                     try:
-                        wait_s.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[class="fl ac am"]')))
+                        scrapper.wait_s.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[class="fl ac am"]')))
                         
                         #dare en aceptar
                         try:
-                            driver.find_element(By.CSS_SELECTOR, 'div[class="fl ac am"]').click()
+                            scrapper.driver.find_element(By.CSS_SELECTOR, 'div[class="fl ac am"]').click()
 
-                            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="text"]')))
+                            scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="text"]')))
 
                             handlers(bot, user , "Introduce tu número de movil (con el código regional adelante, ejemplo: +53, +52 , +01, etc) o tu correo electrónico para enviar el código de verificación" , "correo_o_numero", temp_dict)
 
                             for i in temp_dict[user]["res"]:
 
-                                driver.find_element(By.CSS_SELECTOR, 'input[type="text"]').send_keys(i)
+                                scrapper.driver.find_element(By.CSS_SELECTOR, 'input[type="text"]').send_keys(i)
 
                                 time.sleep(0.5)
 
@@ -283,12 +278,12 @@ def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
 
                             for i in temp_dict[user]["res"]:
 
-                                driver.find_element(By.CSS_SELECTOR, 'input[type="password"]').send_keys(i)
+                                scrapper.driver.find_element(By.CSS_SELECTOR, 'input[type="password"]').send_keys(i)
 
                                 time.sleep(0.5)
                             
                             #Cuidado aqui! No termine de localizar el boton para continuar, este lo agrego porque creo que funcionará
-                            driver.find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-tti-phase="-1"][data-focusable="true"][data-type="container"][tabindex="0"]')[1].click()
+                            scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-tti-phase="-1"][data-focusable="true"][data-type="container"][tabindex="0"]')[1].click()
 
                         except:
 
@@ -302,17 +297,17 @@ def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
             pass
 
 
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
 
         try:
             
             bot.send_message(user, "🆕 Mensaje de Información\n\nMuy Bien, Ya accedí a Facebook :D")
-            # wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="main"]')))
+            # scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="main"]')))
             print("Se cargaron cookies ")
             return ("ok", "login con cookies exitosamente", temp_dict[user]["cookies_dict"])
     
         except Exception as er:
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
             raise Exception("ID usuario: "+ str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
     
     else:
@@ -320,40 +315,40 @@ def cargar_cookies(driver, user, bot=False , hacer_loguin=True):
         return ("ok", "login con cookies exitosamente", temp_dict[user]["cookies_dict"])
         
 
-def captcha(driver , user, bot: telebot.TeleBot):
+def captcha(scrapper: s, user, bot: telebot.TeleBot):
     try:
-        if "captcha" in  driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh").get_attribute("src"):
+        if "captcha" in  scrapper.driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh").get_attribute("src"):
             
             while True:
                 #el enlace del captcha cambia cuando se introduce uno erróneo, ya que se vuelve a generar uno nuevo desde una dirección diferente
-                temp_dict[user]["url_captcha"] = driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh").get_attribute("src")
+                temp_dict[user]["url_captcha"] = scrapper.driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh").get_attribute("src")
                 #Esperar a que la foto se muestre adecuadamente en la pantalla para que selenium pueda hacerle captura
-                wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh")))
+                scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh")))
                 
             
-                handlers(bot, user, "ATENCION!\nHa aparecido un captcha!\n\nIntroduce el código proporcionado en la foto CORRECTAMENTE para continuar...", "captcha", temp_dict, file=telebot.types.InputFile(make_captcha_screenshoot(driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh"), user)))
+                handlers(bot, user, "ATENCION!\nHa aparecido un captcha!\n\nIntroduce el código proporcionado en la foto CORRECTAMENTE para continuar...", "captcha", temp_dict, file=telebot.types.InputFile(make_captcha_screenshoot(scrapper.driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh"), user)))
                                    
                 
                 for i in temp_dict[user]["res"]:
-                    driver.find_element(By.CSS_SELECTOR, "input#«r1»").send_keys(i)
+                    scrapper.driver.find_element(By.CSS_SELECTOR, "input#«r1»").send_keys(i)
                     time.sleep(0.5)
                 
                 #click en continuar    
                 
-                driver.find_elements(By.CSS_SELECTOR, "span.x1lliihq.x193iq5w.x6ikm8r.x10wlt62.xlyipyv.xuxw1ft")[-1].click()
+                scrapper.driver.find_elements(By.CSS_SELECTOR, "span.x1lliihq.x193iq5w.x6ikm8r.x10wlt62.xlyipyv.xuxw1ft")[-1].click()
                 
                 try:
                     
-                    wait.until(ec.url_changes(driver.current_url))
+                    scrapper.wait.until(ec.url_changes(scrapper.driver.current_url))
                     
                 except:
                     pass
                     
                 finally:
                     try:                                   
-                        if "captcha" in  driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh").get_attribute("src"):
+                        if "captcha" in  scrapper.driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh").get_attribute("src"):
                             
-                            if driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh").get_attribute("src") != temp_dict[user]["url_captcha"]:
+                            if scrapper.driver.find_element(By.CSS_SELECTOR, "img.xz74otr.x168nmei.x13lgxp2.x5pf9jr.xo71vjh").get_attribute("src") != temp_dict[user]["url_captcha"]:
                                 
                                 # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nEl codigo que introduciste es incorrecto! :( \n\nVuelve a intentarlo", chat_id=user, message_id=temp_dict[user]["info"].message_id)
                                 
@@ -385,10 +380,10 @@ def captcha(driver , user, bot: telebot.TeleBot):
         return ("no", "Al parecer no hay captcha")
     
     except:
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
         raise Exception("ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
     
-def loguin(driver: seleniumbase.Driver, user, bot, **kwargs):
+def loguin(scrapper: s, user, bot, **kwargs):
 
     """
     Si no se proporciona un user_id, se creará uno nuevo
@@ -405,15 +400,15 @@ def loguin(driver: seleniumbase.Driver, user, bot, **kwargs):
         
         bot.send_message(user, "🆕 Mensaje de Información\n\nHay cookies de la sesion, voy a cargarlas.\n\nEspere un momento...")
         
-        temp_dict[user]["res"] = cargar_cookies(driver, user, bot)    
+        temp_dict[user]["res"] = cargar_cookies(scrapper, user, bot)    
         if temp_dict[user]["res"][0] == "error":
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
             raise Exception(temp_dict[user]["res"])
         
 
         if not collection.find_one({"telegram_id": user}):
             collection.insert_one({"_id": int(time.time()), "telegram_id": user})
-            guardar_cookies(driver, user)
+            guardar_cookies(scrapper, user)
         
         return temp_dict[user]["res"]
     
@@ -421,17 +416,17 @@ def loguin(driver: seleniumbase.Driver, user, bot, **kwargs):
         if collection.find_one({"telegram_id": user}):
             temp_dict[user]["res"] = collection.find_one({"telegram_id": user})
             if temp_dict[user]["res"].get("cookies"):
-                guardar_cookies(driver, user, cookiespkl=temp_dict[user]["res"]["cookies"])
-                return loguin(driver, user, bot)
+                guardar_cookies(scrapper, user, cookiespkl=temp_dict[user]["res"]["cookies"])
+                return loguin(scrapper, user, bot)
 
             else:
-                return loguin_cero(driver, user, bot)
+                return loguin_cero(scrapper, user, bot)
 
         else:
 
             collection.insert_one({"_id": int(time.time()), "telegram_id": user})
                 
-            return loguin_cero(driver, user, bot)
+            return loguin_cero(scrapper, user, bot)
             
                 
         
@@ -440,11 +435,11 @@ def loguin(driver: seleniumbase.Driver, user, bot, **kwargs):
 
 # input.x1s85apg => Input para enviar los videos
 
-def cookies_caducadas(driver, user, bot):
+def cookies_caducadas(scrapper: s, user, bot):
     global temp_dict
     
-    if driver.find_element(By.CSS_SELECTOR, 'div[class="_45ks"]'):
-        temp_dict[user]["perfiles"] = driver.find_elements(By.CSS_SELECTOR, 'div[class="removableItem _95l5 _63fz"]')
+    if scrapper.driver.find_element(By.CSS_SELECTOR, 'div[class="_45ks"]'):
+        temp_dict[user]["perfiles"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[class="removableItem _95l5 _63fz"]')
         temp_dict[user]["texto"] = ""
         temp_dict[user]["lista_perfiles"] = []
         temp_dict[user]["teclado"] = ReplyKeyboardMarkup(True, True, row_width=1, input_field_placeholder="Selecciona una cuenta")
@@ -467,11 +462,11 @@ def cookies_caducadas(driver, user, bot):
             
 
                         
-            wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'input[id="pass"][type="password"]')))[-1].send_keys(temp_dict[user]["password"])
+            scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'input[id="pass"][type="password"]')))[-1].send_keys(temp_dict[user]["password"])
             
             
             try:
-                e = driver.find_element(By.CSS_SELECTOR, 'input#email"')
+                e = scrapper.driver.find_element(By.CSS_SELECTOR, 'input#email"')
                 
             except:
                 e = None
@@ -481,76 +476,76 @@ def cookies_caducadas(driver, user, bot):
                 
 
                 
-                driver.find_element(By.CSS_SELECTOR, 'input#email"').send_keys(temp_dict[user]["user"])
+                scrapper.driver.find_element(By.CSS_SELECTOR, 'input#email"').send_keys(temp_dict[user]["user"])
 
             
             
             try:
                 #click para recordar contraseña
-                driver.find_element(By.CSS_SELECTOR, 'span[class="_9ai8"]').click()
+                scrapper.driver.find_element(By.CSS_SELECTOR, 'span[class="_9ai8"]').click()
             
             except NoSuchElementException:
                 pass
             
             #click en iniciar sesión
-            driver.find_elements(By.CSS_SELECTOR, 'button[name="login"]')[-1].click()
-            wait.until(ec.url_changes(driver.current_url))
-            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
-            temp_dict[user]["res"] = captcha(driver, user, bot)
+            scrapper.driver.find_elements(By.CSS_SELECTOR, 'button[name="login"]')[-1].click()
+            scrapper.wait.until(ec.url_changes(scrapper.driver.current_url))
+            scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
+            temp_dict[user]["res"] = captcha(scrapper.driver, user, bot)
             if temp_dict[user]["res"] == "error":
                 print(temp_dict[user]["res"][1])
                 
             elif temp_dict[user]["res"][0] in ["ok", "no"]:
-                guardar_cookies(driver, user)
+                guardar_cookies(scrapper.driver, user)
                 break
 
-            elif driver.find_element(By.CSS_SELECTOR, 'div[class="mvm _akly"]'):
+            elif scrapper.driver.find_element(By.CSS_SELECTOR, 'div[class="mvm _akly"]'):
                 print("¡Contraseña incorrecta! ¡vuelve a intentarlo!")
-                driver.back()
+                scrapper.driver.back()
                 continue
 
-def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kwargs):
+def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwargs):
     global temp_dict
     print("Estoy usando el loguin desde cero")
     
     temp_dict[user] = {}
     
-    def doble_auth(driver: Chrome , user, bot: telebot.TeleBot):
+    def doble_auth(scrapper: s , user, bot: telebot.TeleBot):
         global temp_dict
 
-        def doble_auth_codigo(driver: Chrome , user, bot: telebot.TeleBot, temp_dict):
-        # e = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+        def doble_auth_codigo(scrapper: s , user, bot: telebot.TeleBot, temp_dict):
+        # e = scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
 
             try:
                 #Si este elemento no está es que aún está en el loguin debido a que los datos introducidos fueron incorrectos (es el mismo de arriba)
-                driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[3].click()
+                scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[3].click()
 
             except:
 
-                driver.find_element(By.CSS_SELECTOR, "input#m_login_password")
+                scrapper.driver.find_element(By.CSS_SELECTOR, "input#m_login_password")
                 info_message("Has introducido tus datos de loguin incorrectamente...\nPor favor, vuelve a intentarlo luego del próximo mensaje", bot, temp_dict, user)
                 
                 del temp_dict[user]["user"]
                 del temp_dict[user]["password"]
 
-                return loguin_cero(driver, user, bot)
+                return loguin_cero(scrapper.driver, user, bot)
             
             
-            wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
+            scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
             
             
-            wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
+            scrapper.wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
 
             #aqui le doy click a el metodo de auth que en este caso sería por codigo de respaldo
-            driver.find_elements(By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')[3].click()
+            scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')[3].click()
 
             #le doy click a continuar
-            driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"][tabindex="0"]')[1].click()
+            scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"][tabindex="0"]')[1].click()
 
             #el siguiente elemento es el input en el que va el código
-            wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'input[inputmode="numeric"]')))
+            scrapper.wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'input[inputmode="numeric"]')))
             
-            temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, 'input[inputmode="numeric"]')
+            temp_dict[user]["e"] = scrapper.driver.find_element(By.CSS_SELECTOR, 'input[inputmode="numeric"]')
             
             
             handlers(bot, user, "A continuación, introduce uno de los códigos de respaldo de Facebook\n\n(Estos códigos son de 8 dígitos numéricos y puedes obtenerlos en el centro de cuentas en los ajustes de tu cuenta de Facebook)" , "codigo_respaldo", temp_dict, markup=ForceReply())
@@ -565,27 +560,27 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             
             
             print("he ingresado los códigos")
-            temp_dict[user]["url_actual"] = driver.current_url
+            temp_dict[user]["url_actual"] = scrapper.driver.current_url
             
 
             #click en el boton de continuar
-            driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[4].click()
+            scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[4].click()
             print("click en el boton de continuar")
             
             
             
             try:
                 #este mensaje se muestra cuando el código es incorrecto
-                if wait_s.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')) > 8)):
+                if scrapper.wait_s.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')) > 8)):
                     bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto!\n\nEspera un momento para volver a intentarlo...")
                     
-                    return loguin_cero(driver, user, bot)
+                    return loguin_cero(scrapper, user, bot)
                     
             except:
                 pass
             
             # #esperar a que no esté el botón
-            # wait.until(ec.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="xod5an3 xg87l8a"]')))
+            # scrapper.wait.until(ec.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="xod5an3 xg87l8a"]')))
             
             
             
@@ -593,28 +588,28 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             return "ok"
         
 
-        def doble_auth_email_verification(driver: Chrome, user, bot, temp_dict):
+        def doble_auth_email_verification(scrapper: s, user, bot, temp_dict):
             
-            temp_dict[user]["url_actual"] = driver.current_url
+            temp_dict[user]["url_actual"] = scrapper.driver.current_url
                     
-            driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
+            scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
 
-            temp_dict[user]["email"] = driver.find_element(By.XPATH, '//*[contains(text(), "*")]').text
+            temp_dict[user]["email"] = scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "*")]').text
 
             handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta =>" + temp_dict[user]["email"] + "<= para finalizar el loguin...","email_verification", temp_dict)
 
-            driver.find_element(By.CSS_SELECTOR, 'input').send_keys(temp_dict[user]["res"])
+            scrapper.driver.find_element(By.CSS_SELECTOR, 'input').send_keys(temp_dict[user]["res"])
 
 
-            driver.find_element(By.XPATH, '//*[contains(text(), "Continue")]').click()
+            scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Continue")]').click()
 
             return "ok"
 
 
         try:
-            if wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4)):
+            if scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4)):
 
-                doble_auth_codigo(driver, user, bot, temp_dict)
+                doble_auth_codigo(scrapper.driver, user, bot, temp_dict)
                 temp_dict[user]["doble"] = True
                 
         
@@ -622,9 +617,9 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             pass
 
         try:
-            if wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))):
+            if scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))):
 
-                doble_auth_email_verification(driver, user, bot, temp_dict)
+                doble_auth_email_verification(scrapper.driver, user, bot, temp_dict)
                 temp_dict[user]["doble"] = True
         
         except:
@@ -639,7 +634,7 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
                 temp_dict[user]["doble"] = False
 
                 print("cambiar la url a la de save-device")
-                wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
+                scrapper.wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
                 print("ha cambiado!")
 
             except:
@@ -648,7 +643,7 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
 
             #sustituto de remember_browser
             try:
-                if driver.find_element(By.CSS_SELECTOR, 'div#screen-root'):
+                if scrapper.driver.find_element(By.CSS_SELECTOR, 'div#screen-root'):
 
                     bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
             
@@ -656,13 +651,13 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
             
             except Exception as err:
 
-                if not "save-device" in driver.current_url:
+                if not "save-device" in scrapper.driver.current_url:
                 
                 
                     bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
                     
                     
-                    return doble_auth(driver, user, bot)
+                    return doble_auth(scrapper.driver, user, bot)
 
 
                 raise err
@@ -671,8 +666,8 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
 
             
             #click en confiar en este dispositivo
-            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
-            driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
+            scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
+            scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
 
             # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto", chat_id=user, message_id=temp_dict[user]["info"].message_id)     
             
@@ -691,34 +686,34 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
 
         if os.name == "nt":
             try:
-                driver.get("https://m.facebook.com/login/")
+                scrapper.driver.get("https://m.facebook.com/login/")
             except:
                 pass
             
             while True:
                 
                 try:
-                    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+                    scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
                     break
                 except:
                     pass
                 
         else:
-            driver.get("https://facebook.com")
+            scrapper.driver.get("https://facebook.com")
     
-    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+    scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
     
     #-----------------obtener usuario para loguin---------------
     try:
-        wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
+        scrapper.wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
         # temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_email")
-        temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, "input")[0]
+        temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, "input")[0]
 
     except:
         #a veces te puede salir este cartel en el inicio
-        driver.find_element(By.CSS_SELECTOR, 'img[src="https://z-m-static.xx.fbcdn.net/rsrc.php/v4/yH/r/BclC1m8Y3Sb.png"]')
+        scrapper.driver.find_element(By.CSS_SELECTOR, 'img[src="https://z-m-static.xx.fbcdn.net/rsrc.php/v4/yH/r/BclC1m8Y3Sb.png"]')
         
-        driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')[4].click()
+        scrapper.driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')[4].click()
 
     #cambiar
     if not temp_dict[user].get("user"):
@@ -729,26 +724,26 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
     
     
     #-----------------obtener password para loguin---------------
-    wait.until(ec.visibility_of_element_located((By.ID, "m_login_password")))
+    scrapper.wait.until(ec.visibility_of_element_located((By.ID, "m_login_password")))
     # temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_password")
-    temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, "input")[1]
+    temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, "input")[1]
     
     if not temp_dict[user].get("password"):
         handlers(bot, user, "Introduce a continuación la contraseña", "password", temp_dict)
     
     #quitar
-    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura de loguin")
-    temp_dict[user]["url_actual"] = driver.current_url
+    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura de loguin")
+    temp_dict[user]["url_actual"] = scrapper.driver.current_url
     
     temp_dict[user]["e"].send_keys(temp_dict[user]["password"])
     
-    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-anchor-id="replay"]')))
+    scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-anchor-id="replay"]')))
 
-    driver.find_element(By.CSS_SELECTOR, 'div[data-anchor-id="replay"]').click()
+    scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-anchor-id="replay"]').click()
     
     try:
-        wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
+        scrapper.wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
     except:
         pass
     
@@ -758,28 +753,28 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
     
     try:
         #cuando no introduces bien ninguno de tus datos:
-        if driver.find_element(By.CSS_SELECTOR, 'div[class="wbloks_73"]'):
+        if scrapper.driver.find_element(By.CSS_SELECTOR, 'div[class="wbloks_73"]'):
             
-            bot.send_photo(user, telebot.type.InputFile(make_screenshoot(driver, user)), "Al parecer los datos que me has enviado son incorrectos\nTe he enviado una captura de lo que me muestra Facebook\n\nPor favor ingrese <b>correctamente</b> sus datos otra vez...")
+            bot.send_photo(user, telebot.type.InputFile(make_screenshoot(scrapper.driver, user)), "Al parecer los datos que me has enviado son incorrectos\nTe he enviado una captura de lo que me muestra Facebook\n\nPor favor ingrese <b>correctamente</b> sus datos otra vez...")
             del temp_dict[user]
-            return loguin_cero(driver, user, bot)
+            return loguin_cero(scrapper, user, bot)
             
     except:
         pass
 
     print("Tendrá doble auth?")
-    if driver.current_url.endswith("#"):
+    if scrapper.driver.current_url.endswith("#"):
         print("Si, si tiene")
-        temp_dict[user]["res"] = doble_auth(driver, user, bot)
+        temp_dict[user]["res"] = doble_auth(scrapper, user, bot)
         if "No se ha podido dar click en el botón de doble autenticación" in temp_dict[user]["res"][-1]:
                         
-            temp_dict[user]["res"] = captcha(driver, user, bot)
+            temp_dict[user]["res"] = captcha(scrapper, user, bot)
             if temp_dict[user]["res"][0] == "error":
                 raise Exception(temp_dict[user]["res"][1])
             
-            if "two_factor" in driver.current_url:
+            if "two_factor" in scrapper.driver.current_url:
                 #doble auntenticación
-                temp_dict[user]["res"] = doble_auth(driver, user, bot)
+                temp_dict[user]["res"] = doble_auth(scrapper, user, bot)
                 if temp_dict[user]["res"][0] == "error":
                     raise Exception(temp_dict[user]["res"][1])
                 
@@ -792,10 +787,10 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
         
         print("Pues no, no tiene")
         print("Voy a esperar a que salga la main page de facebook")
-        # if wait.until(ec.all_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[role=button][data-mcomponent="MContainer"][data-action-id="32746"]') and not "save-device" in driver.current_url)):
-        if wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')) >= 3 and not "save-device" in driver.current_url)):
+        # if scrapper.wait.until(ec.all_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[role=button][data-mcomponent="MContainer"][data-action-id="32746"]') and not "save-device" in driver.current_url)):
+        if scrapper.wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')) >= 3 and not "save-device" in driver.current_url)):
             
-            guardar_cookies(driver, user, loguin={"user": temp_dict[user]["user"], "password": temp_dict[user]["password"]})
+            guardar_cookies(scrapper, user, loguin={"user": temp_dict[user]["user"], "password": temp_dict[user]["password"]})
 
             print("He guardado las cookies")
             
@@ -805,31 +800,31 @@ def loguin_cero(driver: Chrome, user, bot : telebot.TeleBot, load_url=True, **kw
     except Exception as e:
         # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo", chat_id=user, message_id=temp_dict[user]["info"].message_id) 
 
-        if "save-device" in driver.current_url:
+        if "save-device" in scrapper.drive.current_url:
 
-            wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
+            scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
 
-            driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
+            scrapper.drive.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
 
-            wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')) >= 3 and not "save-device" in driver.current_url))
+            scrapper.wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')) >= 3 and not "save-device" in driver.current_url))
 
-            guardar_cookies(driver, user, loguin={"user": temp_dict[user]["user"], "password": temp_dict[user]["password"]})
+            guardar_cookies(scrapper, user, loguin={"user": temp_dict[user]["user"], "password": temp_dict[user]["password"]})
 
             print("He guardado las cookies")
             
             return ("ok", "loguin desde cero satisfactorio :)")
 
-        temp_dict[user]["res"] = make_screenshoot(driver, user)
+        temp_dict[user]["res"] = make_screenshoot(scrapper.drive, user)
         
         bot.send_photo(user, telebot.types.InputFile(temp_dict[user]["res"]) , "🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo")
 
         del temp_dict[user]["user"]
         del temp_dict[user]["password"]
 
-        return loguin_cero(driver, user, bot)
+        return loguin_cero(scrapper, user, bot)
         
         
-def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, contador = 0, **kwargs):
+def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, contador = 0, **kwargs):
     global temp_dict
     
     # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nEstoy accediendo a la publicación del enlace que me proporcionaste...", chat_id=user, message_id=temp_dict[user]["info"].message_id)    
@@ -837,25 +832,25 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
     
     bot.send_message(user, "🆕 Mensaje de Información\n\nEstoy accediendo a la publicación del enlace que me proporcionaste..." )
     
-    temp_dict[user]["a"] = ActionChains(driver, duration=0)
+    temp_dict[user]["a"] = ActionChains(scrapper.driver, duration=0)
     
     if load_url:
         
         if os.name == "nt":
             try:
-                driver.get(url)
+                scrapper.drive.get(url)
             except:
                 pass
             
             while True:
                 try:
-                    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+                    scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
                     break
                 except:
                     pass
                 
         else:
-            driver.get(url)
+            scrapper.drive.get(url)
                 
         
         time.sleep(5)
@@ -875,22 +870,22 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         # if contador != 0:
         #     #aqui compruebo que la ventana de compartir ya no esté interrumpiendo
         #     try:
-        #         wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
+        #         scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
                 
         #     except:
         #         raise Exception("Facebook me bloqueó?")
             
         
-        # wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
+        # scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
 
 
         #esperar el botón de compartir
         print("Buscaré el boton de compartir")
         try:
-            temp_dict[user]["res"] = {1: wait_s.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))}
+            temp_dict[user]["res"] = {1: scrapper.wait_s.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))}
 
         except:
-            temp_dict[user]["res"] = {2: wait_s.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-type="vscroller"]')))}
+            temp_dict[user]["res"] = {2: scrapper.wait_s.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-type="vscroller"]')))}
 
             
         #elemento de compartir existe
@@ -899,17 +894,17 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             temp_dict[user]["contador"] = 0
 
             while True:
-                driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+                scrapper.drive.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
 
                 
                 try:
                     print("buscando el elemento de compartir...")
-                    temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').rect["height"] * 4).perform()
+                    temp_dict[user]["a"].scroll_by_amount(0, scrapper.drive.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - scrapper.drive.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').rect["height"] * 4).perform()
                 
                 #hay veces que la página se corrompe y no existe dicha publicación, con esto lo controlo iniciando un valor para cargar nuevamente la página
                 except:
                     print("La página está corrupta, buscaré el elemento 'feed'")
-                    wait_s.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "feed")]')))
+                    scrapper.wait_s.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "feed")]')))
                     
 
                     print("Encontré el elemento, volveré a cargarla")
@@ -929,13 +924,13 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                         temp_dict[user]["cargar_limite"] = 1
                     
                     
-                    return publicacion(driver, bot, url, user, contador = contador, kwargs=kwargs)
+                    return publicacion(scrapper, bot, url, user, contador = contador, kwargs=kwargs)
 
                 time.sleep(4)
 
                 try:
 
-                    driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
+                    scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
                     temp_dict[user]["contador"] = 0
                     break
 
@@ -945,7 +940,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                     if temp_dict[user]["contador"] >= 4:
                         raise err
 
-                    driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+                    scrapper.driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
 
 
 
@@ -957,10 +952,10 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             
             try:
 
-                temp_dict[user]["url_actual"] = driver.current_url
+                temp_dict[user]["url_actual"] = scrapper.driver.current_url
 
                 #elemento de los grupos
-                wait.until(ec.all_of(
+                scrapper.wait.until(ec.all_of(
                     lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
 
                     lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
@@ -970,55 +965,55 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                 pass
 
             try:
-                temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
+                temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
 
             except IndexError:
-                temp_dict[user]["e"] = driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_element(By.XPATH, '//*[contains(text(), "gr")]')
+                temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_element(By.XPATH, '//*[contains(text(), "gr")]')
 
             #click en compartir en grupos
             time.sleep(8)
             temp_dict[user]["e"].click()
 
             try:
-                WebDriverWait(driver, 5).until(ec.invisibility_of_element_located(temp_dict[user]["e"]))
+                WebDriverWait(scrapper.driver, 5).until(ec.invisibility_of_element_located(temp_dict[user]["e"]))
             except:
                 pass
             
             print("Click en Compartir Grupos")
             
             
-            wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
+            scrapper.wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
 
 
 
 
         #obtener grupos
         print("Obteniendo grupos")
-        wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
+        scrapper.wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
 
-        temp_dict[user]["lista_grupos"] = driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
+        temp_dict[user]["lista_grupos"] = scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
              
         
         if not temp_dict[user]["lista_grupos"]:
             
-            give_error(bot, driver, user, "¡No hay ningún grupo al que publicar!\n\nDescripcion del error:\n" + str(format_exc()))
+            give_error(bot, scrapper.driver, user, "¡No hay ningún grupo al que publicar!\n\nDescripcion del error:\n" + str(format_exc()))
         
         #si ya recorrimos todos los elementos de la lista...
         while len(temp_dict[user]["lista_grupos"]) < contador + 1:
 
             #apuntando el cursor encima de los grupos
-            temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
+            temp_dict[user]["a"].move_to_element(scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
             
             #por alguna razón, cuando lo pruebo en el debugger esta linea me da error con la variable 'temp_dict[user]["lista_grupos"]' que almacena los grupos asi que lo pongo en un try-except
             
-            hacer_scroll(driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][-1], (contador + 1) // 9)
+            hacer_scroll(scrapper.driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][-1], (contador + 1) // 9)
 
             
             
             temp_dict[user]["a"].scroll_from_origin(ScrollOrigin.from_element(temp_dict[user]["lista_grupos"][-1]), 0 , 50).perform()
             
             try:
-                wait_s.until(ec.any_of(lambda driver: len(temp_dict[user]["lista_grupos"]) < len(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]'))))
+                scrapper.wait_s.until(ec.any_of(lambda driver: len(temp_dict[user]["lista_grupos"]) < len(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]'))))
                 
             except:
                 pass
@@ -1026,7 +1021,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             #si ya se recorrieron todos los grupos y la lista de grupos guardada es igual a la que resulta de la búsqueda entonces se terminó exitosamente de publicar
             
 
-            if len(temp_dict[user]["lista_grupos"]) == len(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')):
+            if len(temp_dict[user]["lista_grupos"]) == len(scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')):
                 
                 try:
                     bot.unpin_chat_message(temp_dict[user]["info"].chat.id, temp_dict[user]["info"].message_id)
@@ -1037,9 +1032,9 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
             
             # si la lista de grupos guardada es menor a la nueva resultante de la busqueda, entonces se actualiza los elementos de la lista de grupos y se continua
             else:
-                temp_dict[user]["lista_grupos"] = wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')))
+                temp_dict[user]["lista_grupos"] = scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')))
 
-                temp_dict[user]["lista_grupos"] = driver.find_elements(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
+                temp_dict[user]["lista_grupos"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
       
         
         
@@ -1047,7 +1042,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         # temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
 
 
-        hacer_scroll(driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][contador], (contador + 1) // 9)
+        hacer_scroll(scrapper.driver, user, temp_dict, temp_dict[user]["lista_grupos"], temp_dict[user]["lista_grupos"][contador], (contador + 1) // 9)
         
 
         temp_dict[user]["publicacion"]["nombre"] = temp_dict[user]["lista_grupos"][contador].text
@@ -1055,7 +1050,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
 
 
 
-        # wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')[1].text))
+        # scrapper.wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')[1].text))
 
         try:
             temp_dict[user]["lista_grupos"][contador].click()
@@ -1136,16 +1131,16 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         #esperar a que aparezca el elemento de 'Publicar' 
         try:
             
-            wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]')))
+            scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]')))
 
-            temp_dict[user]["res"] = ("ok", driver.find_elements(By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]')[4])
+            temp_dict[user]["res"] = ("ok", scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"][data-mcomponent="ServerTextArea"][data-type="text"]')[4])
             
         except:
             temp_dict[user]["res"] = ("error", "NO se pudo localizar el boton para publicar en los grupos")
         
         
         if temp_dict[user]["res"][0] == "error":
-            give_error(bot, driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"][1]))
+            give_error(bot, scrapper.driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"][1]))
             return
 
 
@@ -1161,7 +1156,7 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         
         except:
 
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user))) 
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user))) 
             return ("error" , "¿Facebook me habrá bloqueado?")
         
         
@@ -1170,20 +1165,20 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
         contador += 1
 
         if temp_dict[user].get("cargar"):
-            return publicacion(driver, bot, url, user, contador = contador, kwargs=kwargs)
+            return publicacion(scrapper, bot, url, user, contador = contador, kwargs=kwargs)
             
                   
                 
 
-def elegir_cuenta(driver, user, bot , ver_actual=False):
+def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
     global temp_dict
     print("estoy dentro de la funcion de elegir la cuenta")
     
-    wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
+    scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
     
     try:
         #si ya el menú de cuentas está desplegado... hay que omitir cosas
-        temp_dict[user]["e"] = driver.find_element(By.CSS_SELECTOR, 'div[role="list"]')
+        temp_dict[user]["e"] = scrapper.driver.find_element(By.CSS_SELECTOR, 'div[role="list"]')
 
         temp_dict[user]["e"] = True
         
@@ -1199,14 +1194,14 @@ def elegir_cuenta(driver, user, bot , ver_actual=False):
         temp_dict[user]["res"][1].click()
 
         #Elemento de Configuracion de cuenta
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="list"]')))
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="list"]')))
 
 
 
         print("comprobaré si sale el botón de seleccionar otros perfiles, si es que hay")
         #Flecha para ver otros perfiles/cambiar
         
-        wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')))
+        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')))
 
         temp_dict[user]["res"] = esperar('div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]', 3)
 
@@ -1247,7 +1242,7 @@ def elegir_cuenta(driver, user, bot , ver_actual=False):
     print("Obteniendo los elementos de las cuentas...")
 
 
-    temp_dict[user]["cuentas"] = driver.find_elements(By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')[1].find_elements(By.CSS_SELECTOR, 'div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-type="container"][data-mcomponent="MContainer"]')
+    temp_dict[user]["cuentas"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')[1].find_elements(By.CSS_SELECTOR, 'div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-type="container"][data-mcomponent="MContainer"]')
 
     temp_dict[user]["cuentas"].remove(temp_dict[user]["cuentas"][0])
 
@@ -1287,8 +1282,8 @@ def elegir_cuenta(driver, user, bot , ver_actual=False):
         
         temp_dict[user]["cuentas"][temp_dict[user]["res"]].click() 
         print("cuenta elegida!")
-        wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "div#screen-root")))
-        guardar_cookies(driver, user)
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "div#screen-root")))
+        guardar_cookies(scrapper, user)
         
 
         return ("ok", temp_dict[user]["perfiles"][temp_dict[user]["res"]])
@@ -1309,7 +1304,7 @@ def elegir_cuenta(driver, user, bot , ver_actual=False):
     
         
         
-def main(bot: telebot.TeleBot, user, link_publicacion):
+def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
     """
     This function will do all the scrapping requesting to other functions and makes for sure that all is ok
     
@@ -1326,18 +1321,18 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
 
     try:
 
-        temp_dict[user]["res"] = loguin(driver, user, bot)
+        temp_dict[user]["res"] = loguin(scrapper.driver, user, bot)
         if temp_dict[user]["res"][0] == "error":
             
             if "base de datos" in temp_dict[user]["res"][1]:
 
-                bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)))
+                bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)))
                 raise Exception(temp_dict[user]["res"][1])
                 
             raise Exception("Ha ocurrido un error en el loguin!\n\nDescripción:\n" + str(temp_dict[user]["res"][1]))
         
     except:
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
         raise Exception("error intentando hacer loguin\nID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
 
     print("Empezaré a comprobar si hay algún error luego del loguin")
@@ -1346,21 +1341,21 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
             
     try:
         #comprobando estar en el inicio de la mainpage de facebook
-        temp_dict[user]["e"] = wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
+        temp_dict[user]["e"] = scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
 
     except:
         temp_dict[user]["e"] = None
 
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
         raise Exception("ID usuario: " + str(user) + "\nFaltó algo :(")
     
 
     print("A continuación miraré cual es la cuenta actual")    
     try:
-        temp_dict[user]["res"] = elegir_cuenta(driver , user, bot, ver_actual=True)
+        temp_dict[user]["res"] = elegir_cuenta(scrapper , user, bot, ver_actual=True)
         if temp_dict[user]["res"][0] == "error":
 
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "ID usuario: " + str(user) + "\n\nDescripción:\n" + str(temp_dict[user]["res"][1]))
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "ID usuario: " + str(user) + "\n\nDescripción:\n" + str(temp_dict[user]["res"][1]))
             raise Exception("no")
         
         if not len(temp_dict[user]["res"]) == 3:
@@ -1373,10 +1368,10 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
             
             
             if temp_dict[user]["res"].text.lower() == "si":
-                temp_dict[user]["res"] = elegir_cuenta(driver, user, bot)
+                temp_dict[user]["res"] = elegir_cuenta(scrapper.driver, user, bot)
                 if temp_dict[user]["res"][0] == "error":
 
-                    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+                    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
                     raise Exception("ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(temp_dict[user]["res"][1]))
                 else:
                     # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nHe cambiado al perfil de: {temp_dict[user]["res"][1]}", chat_id=user, message_id=temp_dict[user]["info"].message_id, reply_markup=telebot.types.ReplyKeyboardRemove())
@@ -1391,20 +1386,20 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
             bot.send_message(user, "Al parecer, solamente está el perfil de: " + str(temp_dict[user]["res"][1]) +"\n\nContinuaré con ese...")
         
     except:
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
         raise Exception("Ha ocurrido un error intentando ver la cuenta actual! ID usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
     
         
 
     
             
-    temp_dict[user]["res"] = guardar_cookies(driver, user)    
+    temp_dict[user]["res"] = guardar_cookies(scrapper.driver, user)    
 
     # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nLoguin completado exitosamente!", chat_id=user, message_id=temp_dict[user]["info"].message_id)
 
     
     try:
-        temp_dict[user]["res"] = publicacion(driver, bot , link_publicacion, user)
+        temp_dict[user]["res"] = publicacion(scrapper.driver, bot , link_publicacion, user)
         
         if temp_dict[user]["res"][0] == "error":
             print(temp_dict[user]["res"][1])
@@ -1414,7 +1409,7 @@ def main(bot: telebot.TeleBot, user, link_publicacion):
 
     except:
 
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del error")
+        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
         raise Exception("Ha ocurrido un error intentando ver la cuenta actual! ID usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
 
 
