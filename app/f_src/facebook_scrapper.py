@@ -491,12 +491,12 @@ def cookies_caducadas(scrapper: s, user, bot):
             scrapper.driver.find_elements(By.CSS_SELECTOR, 'button[name="login"]')[-1].click()
             scrapper.wait.until(ec.url_changes(scrapper.driver.current_url))
             scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
-            temp_dict[user]["res"] = captcha(scrapper.driver, user, bot)
+            temp_dict[user]["res"] = captcha(scrapper, user, bot)
             if temp_dict[user]["res"] == "error":
                 print(temp_dict[user]["res"][1])
                 
             elif temp_dict[user]["res"][0] in ["ok", "no"]:
-                guardar_cookies(scrapper.driver, user)
+                guardar_cookies(scrapper, user)
                 break
 
             elif scrapper.driver.find_element(By.CSS_SELECTOR, 'div[class="mvm _akly"]'):
@@ -528,7 +528,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
                 del temp_dict[user]["user"]
                 del temp_dict[user]["password"]
 
-                return loguin_cero(scrapper.driver, user, bot)
+                return loguin_cero(scrapper, user, bot)
             
             
             scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
@@ -609,7 +609,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         try:
             if scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4)):
 
-                doble_auth_codigo(scrapper.driver, user, bot, temp_dict)
+                doble_auth_codigo(scrapper, user, bot, temp_dict)
                 temp_dict[user]["doble"] = True
                 
         
@@ -619,7 +619,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         try:
             if scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))):
 
-                doble_auth_email_verification(scrapper.driver, user, bot, temp_dict)
+                doble_auth_email_verification(scrapper, user, bot, temp_dict)
                 temp_dict[user]["doble"] = True
         
         except:
@@ -657,7 +657,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
                     bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
                     
                     
-                    return doble_auth(scrapper.driver, user, bot)
+                    return doble_auth(scrapper, user, bot)
 
 
                 raise err
@@ -755,7 +755,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         #cuando no introduces bien ninguno de tus datos:
         if scrapper.driver.find_element(By.CSS_SELECTOR, 'div[class="wbloks_73"]'):
             
-            bot.send_photo(user, telebot.type.InputFile(make_screenshoot(scrapper.driver, user)), "Al parecer los datos que me has enviado son incorrectos\nTe he enviado una captura de lo que me muestra Facebook\n\nPor favor ingrese <b>correctamente</b> sus datos otra vez...")
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Al parecer los datos que me has enviado son incorrectos\nTe he enviado una captura de lo que me muestra Facebook\n\nPor favor ingrese <b>correctamente</b> sus datos otra vez...")
             del temp_dict[user]
             return loguin_cero(scrapper, user, bot)
             
@@ -1321,7 +1321,7 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
 
     try:
 
-        temp_dict[user]["res"] = loguin(scrapper.driver, user, bot)
+        temp_dict[user]["res"] = loguin(scrapper, user, bot)
         if temp_dict[user]["res"][0] == "error":
             
             if "base de datos" in temp_dict[user]["res"][1]:
@@ -1368,7 +1368,7 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
             
             
             if temp_dict[user]["res"].text.lower() == "si":
-                temp_dict[user]["res"] = elegir_cuenta(scrapper.driver, user, bot)
+                temp_dict[user]["res"] = elegir_cuenta(scrapper, user, bot)
                 if temp_dict[user]["res"][0] == "error":
 
                     bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
@@ -1393,13 +1393,13 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
 
     
             
-    temp_dict[user]["res"] = guardar_cookies(scrapper.driver, user)    
+    temp_dict[user]["res"] = guardar_cookies(scrapper, user)    
 
     # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nLoguin completado exitosamente!", chat_id=user, message_id=temp_dict[user]["info"].message_id)
 
     
     try:
-        temp_dict[user]["res"] = publicacion(scrapper.driver, bot , link_publicacion, user)
+        temp_dict[user]["res"] = publicacion(scrapper, bot , link_publicacion, user)
         
         if temp_dict[user]["res"][0] == "error":
             print(temp_dict[user]["res"][1])
