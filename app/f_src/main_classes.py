@@ -1,4 +1,4 @@
-from chrome_driver import uc_driver
+from f_src.chrome_driver import uc_driver
 from selenium.webdriver.support.ui import WebDriverWait
 
 class scrapper:
