@@ -98,7 +98,7 @@ def borrar_question(m):
         bot.send_message(m.chat.id, "Muy bien, borraré todo lo que sé de ti")
         
         for i in collection.find_one({"telegram_id": m.from_user.id})["cookies"]:
-            scrapper.driver.delete_cookie(i)
+            scrapper.driver.delete_all_cookies()
         
         try:
             collection.delete_one({"telegram_id": m.from_user.id})
