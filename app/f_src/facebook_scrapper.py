@@ -905,13 +905,30 @@ def publicacion(driver: Chrome, bot:telebot.TeleBot, url, user, load_url=True, c
                 try:
                     print("buscando el elemento de compartir...")
                     temp_dict[user]["a"].scroll_by_amount(0, driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').rect["height"] * 4).perform()
-
+                
+                #hay veces que la página se corrompe y no existe dicha publicación, con esto lo controlo iniciando un valor para cargar nuevamente la página
                 except:
+                    print("La página está corrupta, buscaré el elemento 'feed'")
                     wait_s.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(text(), "feed")]')))
+                    
 
-                    print("La página está corrupta, volveré a cargarla")
+                    print("Encontré el elemento, volveré a cargarla")
                     temp_dict[user]["cargar"] = True
 
+                    # El número de intentos límite es de 3
+                    if temp_dict[user].get("cargar_limite"):
+                        if temp_dict[user].get("cargar_limite") >= 3:
+                            
+                            raise Exception("Parece que la página de la publicación a compartir se ha corrompido")
+                    
+                        else: 
+                            temp_dict[user]["cargar_limite"] += 1
+                    
+
+                    else:
+                        temp_dict[user]["cargar_limite"] = 1
+                    
+                    
                     return publicacion(driver, bot, url, user, contador = contador, kwargs=kwargs)
 
                 time.sleep(4)
