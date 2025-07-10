@@ -1208,6 +1208,7 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
 
 
         print("comprobaré si sale el botón de seleccionar otros perfiles, si es que hay")
+
         #Flecha para ver otros perfiles/cambiar
         
         scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')))
@@ -1230,7 +1231,7 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
 
             return ("ok", temp_dict[user]["res"].text.split("\n")[0].strip(), "uno")
 
-        temp_dict[user]["res"][1].click()
+        temp_dict[user]["res"].click()
         
         temp_dict[user]["res"] = ("ok", "han salido")
         print("Click en ver todos los perfiles")
