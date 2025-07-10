@@ -1198,7 +1198,7 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
         print("Voy a esperar a que salga el menu de cuentas")
 
         #este elemento es el de los ajustes del perfil (las 3 rayas de la derecha superior)
-        temp_dict[user]["res"] = esperar('div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]', 2)
+        temp_dict[user]["res"] = esperar(scrapper,'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]', 2)
 
         temp_dict[user]["res"][1].click()
 
@@ -1212,13 +1212,13 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
         
         scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')))
 
-        temp_dict[user]["res"] = esperar('div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]', 3)
+        temp_dict[user]["res"] = esperar(scrapper, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]', 3)
 
 
         if temp_dict[user]["res"][0].lower() == "error":
             
 
-            temp_dict[user]["res"] = esperar('div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"]', 3)
+            temp_dict[user]["res"] = esperar(scrapper, 'div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"]', 3)
 
             if temp_dict[user]["res"][0] == "error":
 
@@ -1245,7 +1245,7 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
     print("Esperaré a que salgan todas las cuentas en el navegador")
 
     #este elemento es el padre de las cuentas, concretamente el 2do elemento en el html
-    esperar('div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]', 1)
+    esperar(scrapper, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]', 1)
 
 
     print("Obteniendo los elementos de las cuentas...")
