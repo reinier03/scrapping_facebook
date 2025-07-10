@@ -189,10 +189,10 @@ def get_work(m):
                         pass
                     
                     else:
-                        bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(e.args[0]) + "</blockquote>")
+                        bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(format_exc()) + "</blockquote>")
 
                 else:
-                    bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(e.args) + "</blockquote>")
+                    bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(format_exc()) + "</blockquote>")
             
             
                 

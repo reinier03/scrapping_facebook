@@ -1212,18 +1212,23 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
         
         scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')))
 
-        temp_dict[user]["res"] = esperar(scrapper, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]', 3)
+        temp_dict[user]["res"] = False
+
+        if len(scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')) > 3:
+            temp_dict[user]["res"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')[3]
 
 
-        if temp_dict[user]["res"][0].lower() == "error":
+        else:
+            if len(scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"]')) > 3:
+                temp_dict[user]["res"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')[3]
+
+
+        if not temp_dict[user]["res"]:
             
+            #si tiene solamente 1 perfil en la cuenta no aparecerá el botón
+            temp_dict[user]["res"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')[2]
 
-            temp_dict[user]["res"] = esperar(scrapper, 'div[role="button"][tabindex="0"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"]', 3)
-
-            if temp_dict[user]["res"][0] == "error":
-
-                raise Exception("No se pudo encontrar el desplegable para ver otros perfiles de la misma cuenta")
-
+            return ("ok", temp_dict[user]["res"].text.split("\n")[0].strip(), "uno")
 
         temp_dict[user]["res"][1].click()
         
