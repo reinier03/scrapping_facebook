@@ -721,7 +721,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
 
     except:
         #A veces aparecerá una presentacion de unirse a facebook, le daré a que ya tengo una cuenta...
-        scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "I already have an account")]').click()
+        scrapper.driver.find_element(By.XPATH, '//div[contains(text(), "I already have an account")]').click()
 
     
     scrapper.wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
