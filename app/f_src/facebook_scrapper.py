@@ -594,7 +594,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
                     
             scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
 
-            temp_dict[user]["email"] = scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "*")]').text
+            temp_dict[user]["email"] = scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "**")]').text
 
             handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta =>" + temp_dict[user]["email"] + "<= para finalizar el loguin...","email_verification", temp_dict)
 
@@ -606,75 +606,83 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
             return "ok"
 
 
+        scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4, ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))))
+
         try:
-            if scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4)):
-                print("Haremos la doble autenticación con los códigos de recuperación")
-                doble_auth_codigo(scrapper, user, bot, temp_dict)
+            if scrapper.driver.find_element(By.By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]') >= 4:
                 temp_dict[user]["doble"] = True
                 
-        
         except:
             pass
 
+        else:
+            print("Haremos la doble autenticación con los códigos de recuperación")
+            doble_auth_codigo(scrapper, user, bot, temp_dict)
+                
+        
+
+
         try:
-            if scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))):
-                print("Haremos la doble autenticación enviando el código al correo")
-                doble_auth_email_verification(scrapper, user, bot, temp_dict)
-                temp_dict[user]["doble"] = True
+            if scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Check your email")]'):
+                temp_dict[user]["doble"] = True                
         
         except:
             pass
         
+        else:
+            print("Haremos la doble autenticación enviando el código al correo")
+            doble_auth_email_verification(scrapper, user, bot, temp_dict)
         
-        finally:
-            if not temp_dict[user].get("doble"):
-                raise Exception("Abriste la funcion de doble autenticacion pero realmente no habia...que paso?")
+        
+
+        if not temp_dict[user].get("doble"):
+            raise Exception("Abriste la funcion de doble autenticacion pero realmente no habia...que paso?")
+        
+        try:
+            temp_dict[user]["doble"] = False
+
+            print("cambiar la url a la de save-device")
+            scrapper.wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
+            print("ha cambiado!")
+
+        except:
+            pass
+
+
+        #sustituto de remember_browser
+        try:
+            if scrapper.driver.find_element(By.CSS_SELECTOR, 'div#screen-root'):
+
+                bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
+        
+                return ("ok", "se ha dado click en confiar dispositivo")
+        
+        except Exception as err:
+
+            if not "save-device" in scrapper.driver.current_url:
             
-            try:
-                temp_dict[user]["doble"] = False
-
-                print("cambiar la url a la de save-device")
-                scrapper.wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
-                print("ha cambiado!")
-
-            except:
-                pass
-
-
-            #sustituto de remember_browser
-            try:
-                if scrapper.driver.find_element(By.CSS_SELECTOR, 'div#screen-root'):
-
-                    bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
             
-                    return ("ok", "se ha dado click en confiar dispositivo")
-            
-            except Exception as err:
-
-                if not "save-device" in scrapper.driver.current_url:
+                bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
                 
                 
-                    bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
-                    
-                    
-                    return doble_auth(scrapper, user, bot)
+                return doble_auth(scrapper, user, bot)
 
 
-                raise err
-                
+            raise err
             
+        
 
-            
-            #click en confiar en este dispositivo
-            scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
-            scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
+        
+        #click en confiar en este dispositivo
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
+        scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
 
-            # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto", chat_id=user, message_id=temp_dict[user]["info"].message_id)     
+        # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto", chat_id=user, message_id=temp_dict[user]["info"].message_id)     
+        
+        bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
+        
+        return ("ok", "se ha dado click en confiar dispositivo")
             
-            bot.send_message(user, "🆕 Mensaje de Información\n\nOk, el codigo introducido es correcto")
-            
-            return ("ok", "se ha dado click en confiar dispositivo")
-                
 
             
             
