@@ -594,7 +594,9 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
                     
             scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
 
-            temp_dict[user]["email"] = scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "**")]').text
+            temp_dict[user]["email"] = scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "code we sent")]').text.split("to")[-1].strip()
+
+            print("Email a enviar codigo: " + temp_dict[user]["email"])
 
             handlers(bot, user, "A continuación, ingresa el código númerico que ha sido enviado al email vinculado a esta cuenta =>" + temp_dict[user]["email"] + "<= para finalizar el loguin...","email_verification", temp_dict)
 
@@ -739,8 +741,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
     if not temp_dict[user].get("password"):
         handlers(bot, user, "Introduce a continuación la contraseña", "password", temp_dict)
     
-    #quitar
-    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura de loguin")
+
     temp_dict[user]["url_actual"] = scrapper.driver.current_url
     
     temp_dict[user]["e"].send_keys(temp_dict[user]["password"])
