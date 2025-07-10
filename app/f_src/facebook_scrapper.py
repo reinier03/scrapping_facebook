@@ -980,7 +980,7 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
                 temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
 
             except IndexError:
-                temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_element(By.XPATH, '//*[contains(text(), "gr")]')
+                temp_dict[user]["e"] = scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Share in a Group")]')
 
             #click en compartir en grupos
             time.sleep(8)
