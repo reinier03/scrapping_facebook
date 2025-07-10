@@ -722,9 +722,12 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
     except:
         #A veces aparecerá una presentacion de unirse a facebook, le daré a que ya tengo una cuenta...
         scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "I already have an account")]').click()
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+        scrapper.wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
+        temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, "input")[0]
 
     
-    scrapper.wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
+    
 
     if not temp_dict[user].get("user"):
         handlers(bot, user, "Introduce a continuación tu <b>Correo</b> o <b>Número de Teléfono</b> (agregando el código de tu país por delante ej: +53, +01, +52, etc) con el que te autenticas en Facebook: ", "user", temp_dict)
@@ -809,7 +812,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
     except Exception as e:
         # temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo", chat_id=user, message_id=temp_dict[user]["info"].message_id) 
 
-        if "save-device" in scrapper.drive.current_url:
+        if "save-device" in scrapper.driver.current_url:
 
             scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
 
@@ -823,7 +826,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
             
             return ("ok", "loguin desde cero satisfactorio :)")
 
-        temp_dict[user]["res"] = make_screenshoot(scrapper.drive, user)
+        temp_dict[user]["res"] = make_screenshoot(scrapper.driver, user)
         
         bot.send_photo(user, telebot.types.InputFile(temp_dict[user]["res"]) , "🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo")
 
@@ -847,7 +850,7 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
         
         if os.name == "nt":
             try:
-                scrapper.drive.get(url)
+                scrapper.driver.get(url)
             except:
                 pass
             
@@ -859,7 +862,7 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
                     pass
                 
         else:
-            scrapper.drive.get(url)
+            scrapper.driver.get(url)
                 
         
         time.sleep(5)
@@ -903,12 +906,12 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
             temp_dict[user]["contador"] = 0
 
             while True:
-                scrapper.drive.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
+                scrapper.driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
 
                 
                 try:
                     print("buscando el elemento de compartir...")
-                    temp_dict[user]["a"].scroll_by_amount(0, scrapper.drive.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - scrapper.drive.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').rect["height"] * 4).perform()
+                    temp_dict[user]["a"].scroll_by_amount(0, scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').rect["height"] * 4).perform()
                 
                 #hay veces que la página se corrompe y no existe dicha publicación, con esto lo controlo iniciando un valor para cargar nuevamente la página
                 except:
