@@ -720,12 +720,12 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, "input")[0]
 
     except:
-        #a veces te puede salir este cartel en el inicio
-        scrapper.driver.find_element(By.CSS_SELECTOR, 'img[src="https://z-m-static.xx.fbcdn.net/rsrc.php/v4/yH/r/BclC1m8Y3Sb.png"]')
-        
-        scrapper.driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')[4].click()
+        #A veces aparecerá una presentacion de unirse a facebook, le daré a que ya tengo una cuenta...
+        scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "I already have an account")]').click()
 
-    #cambiar
+    
+    scrapper.wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
+
     if not temp_dict[user].get("user"):
         handlers(bot, user, "Introduce a continuación tu <b>Correo</b> o <b>Número de Teléfono</b> (agregando el código de tu país por delante ej: +53, +01, +52, etc) con el que te autenticas en Facebook: ", "user", temp_dict)
 
