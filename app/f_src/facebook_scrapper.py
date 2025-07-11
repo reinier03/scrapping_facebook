@@ -528,6 +528,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
                 del temp_dict[user]["user"]
                 del temp_dict[user]["password"]
 
+
                 return loguin_cero(scrapper, user, bot)
             
             
@@ -661,15 +662,16 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         except Exception as err:
 
             if not "save-device" in scrapper.driver.current_url:
-            
-            
+                            
                 bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
-                
-                
+
                 return loguin_cero(scrapper, user, bot)
-
-
-            raise Exception("No se ha encontrado la pagina de confiar en este dispositivo?")
+            
+            elif "save-device" in scrapper.driver.current_url:
+                pass
+            
+            else:
+                raise Exception("No se ha encontrado la pagina de confiar en este dispositivo?")
             
         
 
