@@ -531,16 +531,14 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
                 return loguin_cero(scrapper, user, bot)
             
             
-            scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
-            
-            
-            scrapper.wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')))
+            scrapper.wait.until(ec.any_of(lambda driver: driver.find_element(By.XPATH, '//*[contains(text(), "Backup code")]')))
 
             #aqui le doy click a el metodo de auth que en este caso sería por codigo de respaldo
-            scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="radio"][data-bloks-name="bk.components.Flexbox"]')[3].click()
+            scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Backup code")]').click()
 
             #le doy click a continuar
-            scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"][tabindex="0"]')[1].click()
+            scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Continue")]').click()
+            # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"][tabindex="0"]')[1].click()
 
             #el siguiente elemento es el input en el que va el código
             scrapper.wait.until(ec.element_to_be_clickable((By.CSS_SELECTOR, 'input[inputmode="numeric"]')))
@@ -552,7 +550,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
             
             #para borrar los espacios en el codigo de respaldo
             if re.search(r"\D", temp_dict[user]["res"].text):
-                temp_dict[user]["res"].text = temp_dict[user]["res"].text.replace(re.search(r"\D+", temp_dict[user]["res"].text).group(), "")
+                temp_dict[user]["res"].text = temp_dict[user]["res"].text.replace(re.search(r"\D+", temp_dict[user]["res"].text).group(), "").strip()
 
             for i in temp_dict[user]["res"].text:
                 temp_dict[user]["e"].send_keys(i)
@@ -564,7 +562,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
             
 
             #click en el boton de continuar
-            scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[4].click()
+            scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Continue")]').click()
             print("click en el boton de continuar")
             
             
