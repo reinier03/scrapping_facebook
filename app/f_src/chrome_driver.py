@@ -22,7 +22,7 @@ def anadir_opciones(o, container=False, mobile=False):
     o.add_argument("--disable-infobars")
     o.add_argument("--disable-blink-features=AutomationControlled")
     o.add_argument("--disable-features=ChromeWhatsNewUI")
-    o.add_argument("--lang=es-ES")
+    o.add_argument("--lang=en-UE")
 
     # o.add_argument("--single-process")
     # o.add_argument("--disable-dev-shm-usage")
@@ -57,7 +57,7 @@ def anadir_opciones(o, container=False, mobile=False):
 
 
     prefers = {"profile.default_content_setting_values.notifications": 2,
-            "intl.accept_languages": ["es-ES", "es"],
+            "intl.accept_languages": ["en-UE", "en"],
             "credentials_enable_service": False}
     
 

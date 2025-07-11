@@ -838,6 +838,10 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         
 def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, contador = 0, **kwargs):
     global temp_dict
+
+    if kwargs.get("diccionario"):
+        temp_dict = kwargs["diccionario"]
+        
     
     # temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nEstoy accediendo a la publicación del enlace que me proporcionaste...", chat_id=user, message_id=temp_dict[user]["info"].message_id)    
     
@@ -919,7 +923,7 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
                     scrapper.wait_s.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "feed")]')))
                     
 
-                    print("Encontré el elemento, volveré a cargarla")
+                    info_message('La página está corrupta... Cuidado... \n\nEstás publicando demasiado?', bot, temp_dict, user)
                     temp_dict[user]["cargar"] = True
 
                     # El número de intentos límite es de 3
@@ -936,7 +940,7 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
                         temp_dict[user]["cargar_limite"] = 1
                     
                     
-                    return publicacion(scrapper, bot, url, user, contador = contador, kwargs=kwargs)
+                    return publicacion(scrapper, bot, url, user, contador = contador, kwargs=kwargs, diccionario=temp_dict)
 
                 time.sleep(4)
 
@@ -980,7 +984,7 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
                 temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
 
             except IndexError:
-                temp_dict[user]["e"] = scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Share in a Group")]')
+                temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[1].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
 
             #click en compartir en grupos
             time.sleep(8)
@@ -1177,7 +1181,7 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
         contador += 1
 
         if temp_dict[user].get("cargar"):
-            return publicacion(scrapper, bot, url, user, contador = contador, kwargs=kwargs)
+            return publicacion(scrapper, bot, url, user, contador = contador, kwargs=kwargs, diccionario=temp_dict)
             
                   
                 
