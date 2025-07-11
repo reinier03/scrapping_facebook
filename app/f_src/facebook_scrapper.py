@@ -970,10 +970,12 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
 
 
                 #elemento de los grupos
-                scrapper.wait.until(ec.all_of(
-                    lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
+                scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')))
 
-                    lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
+                # scrapper.wait.until(ec.all_of(
+                #     lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
+
+                #     lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
                 
 
             except:
