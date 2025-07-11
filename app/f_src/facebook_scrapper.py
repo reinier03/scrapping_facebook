@@ -568,16 +568,17 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
             print("click en el boton de continuar")
             
             
-            
-            try:
-                #este mensaje se muestra cuando el código es incorrecto
-                if scrapper.wait_s.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')) > 8)):
-                    bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto!\n\nEspera un momento para volver a intentarlo...")
+            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "captura...")
+            # try:
+            #     #este mensaje se muestra cuando el código es incorrecto
+            #     if scrapper.wait_s.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')) > 8)):
                     
-                    return loguin_cero(scrapper, user, bot)
+            #         bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto!\n\nEspera un momento para volver a intentarlo...")
                     
-            except:
-                pass
+            #         return loguin_cero(scrapper, user, bot)
+                    
+            # except:
+            #     pass
             
             # #esperar a que no esté el botón
             # scrapper.wait.until(ec.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="xod5an3 xg87l8a"]')))
