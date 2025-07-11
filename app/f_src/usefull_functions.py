@@ -141,14 +141,23 @@ def user_folder(user):
         
     return os.path.join(main_folder(), "user_archive",  user)
     
-def make_screenshoot(driver, user, element=False):
+def make_screenshoot(driver, user, element=False, bot=False):
     user = str(user)
     if element:
         element.screenshot(os.path.join(user_folder(user) , str(user) + "_error_facebook.png"))
     else:
         driver.save_screenshot(os.path.join(user_folder(user) , str(user) + "_error_facebook.png"))
     
-    return os.path.join(user_folder(user) , str(user) + "_error_facebook.png")
+    if not bot:
+        return os.path.join(user_folder(user) , str(user) + "_error_facebook.png")
+    
+    else:
+        if element:
+            bot.send_photo(user, telebot.types.InputFile(os.path.join(user_folder(user) , str(user) + "_error_facebook.png")), "Captura de un elemento en el HTML")
+        else:
+            bot.send_photo(user, telebot.types.InputFile(os.path.join(user_folder(user) , str(user) + "_error_facebook.png")), "Captura de pantalla")
+
+        return os.path.join(user_folder(user) , str(user) + "_error_facebook.png")
     
 def make_captcha_screenshoot(captcha_element, user):
     user = str(user)
