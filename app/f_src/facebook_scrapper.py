@@ -666,10 +666,10 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
                 bot.send_message(user, "🆕 Mensaje de Información\n\nHas Introducido un código incorrecto! Vuelve a intentarlo!")
                 
                 
-                return doble_auth(scrapper, user, bot)
+                return loguin_cero(scrapper, user, bot)
 
 
-            raise err
+            raise Exception("No se ha encontrado la pagina de confiar en este dispositivo?")
             
         
 
