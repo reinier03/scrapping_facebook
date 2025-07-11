@@ -648,7 +648,8 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         except:
             pass
 
-
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
+                            
         #sustituto de remember_browser
         try:
             if scrapper.driver.find_element(By.CSS_SELECTOR, 'div#screen-root'):
