@@ -968,7 +968,6 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
             
             try:
 
-                temp_dict[user]["url_actual"] = scrapper.driver.current_url
 
                 #elemento de los grupos
                 scrapper.wait.until(ec.all_of(
@@ -998,7 +997,6 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
             print("Click en Compartir Grupos")
             
             
-            scrapper.wait.until(ec.url_changes(temp_dict[user]["url_actual"]))
 
 
 
