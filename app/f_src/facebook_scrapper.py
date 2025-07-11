@@ -1209,15 +1209,12 @@ def elegir_cuenta(scrapper: s, user, bot: telebot.TeleBot , ver_actual=False):
         scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[2].click()
         # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2].click()
 
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper, user , scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[2])), "Elemento: 1")
-
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper, user , scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2])), "Elemento: 2")
         
 
         # #Elemento de Configuracion de cuenta
         scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="list"]')))
 
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper, user)), "Captura de las configuraciones")
+        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura de las configuraciones")
 
         print("comprobaré si sale el botón de seleccionar otros perfiles, si es que hay")
 
