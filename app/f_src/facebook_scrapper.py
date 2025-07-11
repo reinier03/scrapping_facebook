@@ -612,7 +612,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your notifications")]'))))
 
         try:
-            if scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Check your notifications")]') >= 4:
+            if scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Check your notifications")]'):
                 temp_dict[user]["doble"] = True
                 print("Haremos la doble autenticación con los códigos de recuperación")
                 doble_auth_codigo(scrapper, user, bot, temp_dict)
