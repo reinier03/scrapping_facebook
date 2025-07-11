@@ -608,32 +608,31 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
             return "ok"
 
 
-        scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')) >= 4, ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]'))))
+        scrapper.wait.until(ec.any_of(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]')),
+        ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your notifications")]'))))
 
         try:
-            if scrapper.driver.find_element(By.By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]') >= 4:
+            if scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Check your notifications")]') >= 4:
                 temp_dict[user]["doble"] = True
+                print("Haremos la doble autenticación con los códigos de recuperación")
+                doble_auth_codigo(scrapper, user, bot, temp_dict)
                 
         except:
-            pass
-
-        else:
-            print("Haremos la doble autenticación con los códigos de recuperación")
-            doble_auth_codigo(scrapper, user, bot, temp_dict)
+            pass            
                 
         
 
 
         try:
             if scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Check your email")]'):
-                temp_dict[user]["doble"] = True                
+                temp_dict[user]["doble"] = True    
+                print("Haremos la doble autenticación enviando el código al correo")
+                doble_auth_email_verification(scrapper, user, bot, temp_dict)            
         
         except:
             pass
         
-        else:
-            print("Haremos la doble autenticación enviando el código al correo")
-            doble_auth_email_verification(scrapper, user, bot, temp_dict)
+            
         
         
 
