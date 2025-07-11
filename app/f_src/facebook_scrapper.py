@@ -608,10 +608,10 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
 
 
         scrapper.wait.until(ec.any_of(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your email")]')),
-        ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Check your notifications")]'))))
+        ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Try another way")]'))))
 
         try:
-            if scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Check your notifications")]'):
+            if scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Try another way")]'):
                 temp_dict[user]["doble"] = True
                 print("Haremos la doble autenticación con los códigos de recuperación")
                 doble_auth_codigo(scrapper, user, bot, temp_dict)
@@ -1200,13 +1200,17 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
         
     if not temp_dict[user]["e"]:  
         print("Voy a esperar a que salga el menu de cuentas")
-        scrapper.driver.get(scrapper.driver.current_url + "/bookmarks/")
+        # scrapper.driver.get(scrapper.driver.current_url + "/bookmarks/")
 
-        # #este elemento es el de los ajustes del perfil (las 3 rayas de la derecha superior)
-        # scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 3))
+        #este elemento es el de los ajustes del perfil (las 3 rayas de la derecha superior)
+        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="button"]')))
+        scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')) > 3))
 
-        # # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2].click()
+        # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2].click()
         # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[2].click()
+        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper, user , scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[2])), "Elemento\n\ndiv[role='button']")
+
+        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper, user , scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2])), "Elemento\n\ndiv[role='button']", 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')
         
 
         # #Elemento de Configuracion de cuenta
