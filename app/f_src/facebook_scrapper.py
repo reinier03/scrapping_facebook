@@ -1200,15 +1200,16 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
         
     if not temp_dict[user]["e"]:  
         print("Voy a esperar a que salga el menu de cuentas")
+        scrapper.driver.get(scrapper.driver.current_url + "/bookmarks/")
 
-        #este elemento es el de los ajustes del perfil (las 3 rayas de la derecha superior)
-        scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 3))
+        # #este elemento es el de los ajustes del perfil (las 3 rayas de la derecha superior)
+        # scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 3))
 
-        # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2].click()
-        scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[2].click()
+        # # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2].click()
+        # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[2].click()
         
 
-        #Elemento de Configuracion de cuenta
+        # #Elemento de Configuracion de cuenta
         scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="list"]')))
 
 
@@ -1240,12 +1241,6 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
         
             
         print("Click en ver todos los perfiles")
-    
-
-    
-    
-      
-    
    
         
 
