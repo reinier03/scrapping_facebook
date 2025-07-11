@@ -1218,7 +1218,9 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
 
 
         if len(scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')) >= 4:
-            temp_dict[user]["res"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')[3].click()
+            scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')[3].click()
+            temp_dict[user]["res"] = ("ok", "han salido")
+            
 
 
 
@@ -1231,12 +1233,10 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
 
             return ("ok", temp_dict[user]["res"].text.split("\n")[0].strip(), "uno")
 
-        temp_dict[user]["res"].click()
+
         
-        temp_dict[user]["res"] = ("ok", "han salido")
-        print("Click en ver todos los perfiles")
             
-                
+        print("Click en ver todos los perfiles")
     
 
     
