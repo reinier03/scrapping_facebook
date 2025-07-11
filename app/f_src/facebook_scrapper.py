@@ -1185,7 +1185,8 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
 def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
     global temp_dict
     print("estoy dentro de la funcion de elegir la cuenta")
-    
+
+    scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
     scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
     
     try:
@@ -1201,9 +1202,11 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
         print("Voy a esperar a que salga el menu de cuentas")
 
         #este elemento es el de los ajustes del perfil (las 3 rayas de la derecha superior)
-        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')))
+        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[class="fl ac am"]')))
 
-        scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2].click()
+        # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2].click()
+        scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[class="fl ac am"]')[1].click()
+        
 
         #Elemento de Configuracion de cuenta
         scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="list"]')))
@@ -1251,7 +1254,7 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
     print("Esperaré a que salgan todas las cuentas en el navegador")
 
     #este elemento es el padre de las cuentas, concretamente el 2do elemento en el html
-    esperar(scrapper, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]', 1)
+    scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')))
 
 
     print("Obteniendo los elementos de las cuentas...")
