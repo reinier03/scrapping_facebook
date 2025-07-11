@@ -17,11 +17,11 @@ a = ActionChains(d, 0)
 
 
 
-# with open(r"D:\Programacion\Proyectos personales\webscrapping\revolico_scrapping\user_archive\cookies.pkl", "rb") as file:
-#     c = dill.load(file)
-#     d.get("https://facebook.com/robots.txt")
-#     for i in c["cookies"]:
-#         d.add_cookie(i)
+with open(r"D:\Programacion\Proyectos personales\webscrapping\revolico_scrapping\user_archive\cookies.pkl", "rb") as file:
+    c = dill.load(file)
+    d.get("https://facebook.com/robots.txt")
+    for i in c["cookies"]:
+        d.add_cookie(i)
 
 
 d.get("https://facebook.com")

@@ -566,8 +566,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
             scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Continue")]').click()
             print("click en el boton de continuar")
             
-            
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "captura...")
+
             # try:
             #     #este mensaje se muestra cuando el código es incorrecto
             #     if scrapper.wait_s.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'span[data-bloks-name="bk.components.TextSpan"]')) > 8)):
@@ -785,11 +784,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
             if temp_dict[user]["res"][0] == "error":
                 raise Exception(temp_dict[user]["res"][1])
             
-            if "two_factor" in scrapper.driver.current_url:
-                #doble auntenticación
-                temp_dict[user]["res"] = doble_auth(scrapper, user, bot)
-                if temp_dict[user]["res"][0] == "error":
-                    raise Exception(temp_dict[user]["res"][1])
+
                 
         else:
             pass
@@ -1223,7 +1218,7 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
 
 
         if len(scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')) >= 4:
-            temp_dict[user]["res"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')[3]
+            temp_dict[user]["res"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')[3].click()
 
 
 
@@ -1291,9 +1286,9 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
     
         for e,cuenta in enumerate(temp_dict[user]["cuentas"], 1):     
             
-            temp_dict[user]["perfiles"].append(cuenta.text.split("\n")[0])
+            temp_dict[user]["perfiles"].append(cuenta.text.split("\n")[0].strip())
             
-            temp_dict[user]["teclado"].add(cuenta.text.split("\n")[0])               
+            temp_dict[user]["teclado"].add(cuenta.text.split("\n")[0].strip())               
             
 
                         
