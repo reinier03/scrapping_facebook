@@ -518,11 +518,11 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
 
             try:
                 #Si este elemento no está es que aún está en el loguin debido a que los datos introducidos fueron incorrectos (es el mismo de arriba)
-                scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.ViewTransformsExtension"][data-bloks-visibility-state="entered"]')[3].click()
+                scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Try another way")]').click()
+                
 
             except:
 
-                scrapper.driver.find_element(By.CSS_SELECTOR, "input#m_login_password")
                 info_message("Has introducido tus datos de loguin incorrectamente...\nPor favor, vuelve a intentarlo luego del próximo mensaje", bot, temp_dict, user)
                 
                 del temp_dict[user]["user"]
