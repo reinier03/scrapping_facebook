@@ -1202,10 +1202,10 @@ def elegir_cuenta(scrapper: s, user, bot , ver_actual=False):
         print("Voy a esperar a que salga el menu de cuentas")
 
         #este elemento es el de los ajustes del perfil (las 3 rayas de la derecha superior)
-        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[class="fl ac am"]')))
+        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')))
 
         # scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')[2].click()
-        scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[class="fl ac am"]')[1].click()
+        scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')[2].click()
         
 
         #Elemento de Configuracion de cuenta
