@@ -152,10 +152,7 @@ def make_screenshoot(driver, user, element=False, bot=False):
         return os.path.join(user_folder(user) , str(user) + "_error_facebook.png")
     
     else:
-        if element:
-            bot.send_photo(user, telebot.types.InputFile(os.path.join(user_folder(user) , str(user) + "_error_facebook.png")), "Captura de un elemento en el HTML")
-        else:
-            bot.send_photo(user, telebot.types.InputFile(os.path.join(user_folder(user) , str(user) + "_error_facebook.png")), "Captura de pantalla")
+        bot.send_photo(user, telebot.types.InputFile(os.path.join(user_folder(user) , str(user) + "_error_facebook.png")), "Captura")
 
         return os.path.join(user_folder(user) , str(user) + "_error_facebook.png")
     

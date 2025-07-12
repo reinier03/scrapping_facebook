@@ -1225,10 +1225,16 @@ def elegir_cuenta(scrapper: s, user, bot: telebot.TeleBot , ver_actual=False):
 
         if len(scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')) >= 4:
             print("La cuenta actual tiene más de un perfil")
-            
-            make_screenshoot(scrapper.driver, user, scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[3], bot)
 
-            scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[3].click()
+
+            try:
+                scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[4].find_element(By.CSS_SELECTOR, 'img')
+
+                scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5].click()
+            
+            except:
+                scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[4].click()
+
 
             temp_dict[user]["res"] = ("ok", "han salido")
 
@@ -1251,7 +1257,6 @@ def elegir_cuenta(scrapper: s, user, bot: telebot.TeleBot , ver_actual=False):
     # padre => "div.x1gslohp"
     print("Esperaré a que salgan todas las cuentas en el navegador")
 
-    make_screenshoot(scrapper.driver, user, bot=bot)
 
     #este elemento es el padre de las cuentas, concretamente el 2do elemento en el html
     scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-action-id="99"][data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-tti-phase="-1"][data-focusable="true"]')))
