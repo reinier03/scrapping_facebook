@@ -27,7 +27,6 @@ webhook_url = Si esta variable es definida se usará el metodo webhook, sino pue
 """
 
 
-temp_dict = {}
 cola = {}
 cola["uso"] = False
 admin = os.environ["admin"]
@@ -57,7 +56,10 @@ bot.set_my_commands([
 bot.send_message(os.environ["admin"], "El bot de publicaciones de Facebook está listo :)")
 
 
-
+@bot.middleware_handler()
+def cmd_middleware(update: telebot.types.Update, bot: telebot.TeleBot):
+    scrapper.temp_dict[update.message.from_user.id] = {}
+    return
 
 @bot.message_handler(func=lambda message: not message.chat.id == int(os.environ["admin"]))
 def not_admin(m):
@@ -79,18 +81,30 @@ No te preocupes, yo me encargo por ti ;)
 <u>Lista de Comandos</u>:
 <b>/info</b> para obtener más información de las publicaciones
 <b>/delete</b> - Para cerrar la cuenta actual y poder hacer loguin con una diferente
+<b>/cancel</b> - Para CANCELAR la operación y no publicar (esto solo funciona si estás publicando)
 
 Bot desarrollado por @mistakedelalaif, las dudas o quejas, ir a consultárselas a él
 """)
     return
 
+@bot.message_handler(commands=["cancel"])
+def cmd_cancel(m):
+    if cola["uso"] == m.from_user.id:
+        bot.send_message(m.chat.id, "Muy Bien, Cancelaré la operación actual tan pronto cómo sea posible...")
+        scrapper.temp_dict[m.from_user.id]["cancel"] = True
+        
+
+    else:
+        bot.send_message(m.from_user.id, "¡No tienes ningún proceso activo!")
+
+    return
+    
 @bot.message_handler(commands=["delete"])
 def cmd_delete(m):
-    temp_dict[m.from_user.id] = {}
-    temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, "La opción actual borrará la información que tengo de tu cuenta y tendrías que volver a ingresar todo desde cero nuevamente...\n\nEstás seguro que deseas hacerlo?", reply_markup=ReplyKeyboardMarkup(True, True).add("Si", "No"))
+    scrapper.temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, "La opción actual borrará la información que tengo de tu cuenta y tendrías que volver a ingresar todo desde cero nuevamente...\n\nEstás seguro que deseas hacerlo?", reply_markup=ReplyKeyboardMarkup(True, True).add("Si", "No"))
     
 
-    bot.register_next_step_handler(temp_dict[m.from_user.id]["msg"], borrar_question)
+    bot.register_next_step_handler(scrapper.temp_dict[m.from_user.id]["msg"], borrar_question)
 
 
 def borrar_question(m):
@@ -120,9 +134,9 @@ def borrar_question(m):
 
 @bot.message_handler(commands=["cookies"])
 def cmd_cookies(m):
-    temp_dict[m.from_user.id] = {}
-    temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, "A continuación envia el archivo cookies.pkl al que tienes acceso")
-    bot.register_next_step_handler(temp_dict[m.from_user.id]["msg"], capturar_archivo)
+    scrapper.temp_dict[m.from_user.id] = {}
+    scrapper.temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, "A continuación envia el archivo cookies.pkl al que tienes acceso")
+    bot.register_next_step_handler(scrapper.temp_dict[m.from_user.id]["msg"], capturar_archivo)
     
     
 def capturar_archivo(m):
@@ -165,7 +179,7 @@ Ahora enviame el enlace de la publicación aquí y me ocuparé del resto ;)
     
 
 @bot.message_handler(func=lambda x: True)
-def get_work(m):
+def get_work(m: telebot.types.Message):
     if m.text.lower().startswith("https://www.facebook.com"):            
         
         if cola["uso"]:
@@ -177,7 +191,7 @@ def get_work(m):
         
         
         try:
-            cola["uso"] = True
+            cola["uso"] = m.from_user.id
             
             try:
                 facebook_scrapper.main(scrapper, bot, m.from_user.id , m.text)
@@ -185,7 +199,7 @@ def get_work(m):
             except Exception as e:
                 print("Ha ocurrido un error! Revisa el bot, te dará más detalles")
                 if isinstance(e.args, tuple):
-                    if "no" == str(e.args).lower():
+                    if "no" == str(e.args[0]).lower():
                         pass
                     
                     else:
@@ -224,13 +238,16 @@ def get_work(m):
         
         cola["uso"] = False      
         
-        
-        bot.send_message(m.chat.id, "Operación Terminada")
+        if not scrapper.temp_dict[m.from_user.id]["cancel"]:
+            bot.send_message(m.chat.id, "Operación Terminada")
+
         print("He terminado con: " + str(m.from_user.id))
+        scrapper.temp_dict[m.from_user.id] = {}
 
     else:
         bot.send_message(m.chat.id, "Eso no es un enlace de Facebook\n\nPresiona /info para saber cómo usarme!")
-        return
+    
+    return
     
 
 app = Flask(__name__)

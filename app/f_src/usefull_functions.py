@@ -10,6 +10,14 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import Chrome
 
 
+def if_cancelar(scrapper, user, bot):
+    if scrapper.temp_dict[user]["cancel"]:
+        bot.send_message(user, "Operación cancelada :(")
+        give_error(bot, scrapper.driver, user, "no", False)
+
+    return "ok"
+        
+
 def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elemento, pasos: int, esperar = 1.3):
 
     #a partir de los ultimos 11 elementos el scroll es inútil
@@ -36,8 +44,10 @@ def hacer_scroll(driver: Chrome, user: int, temp_dict: dict, grupos: list , elem
 
     return "ok"
 
-def give_error(bot, driver, user, texto):
-    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del Error")
+def give_error(bot, driver, user, texto, foto=True):
+    if foto:
+        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(driver, user)), "Captura del Error")
+
     raise Exception(texto)
 
 def limpiar(driver: Chrome):
