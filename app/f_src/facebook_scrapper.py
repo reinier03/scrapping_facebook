@@ -588,9 +588,10 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
 
         def doble_auth_email_verification(scrapper: s, user, bot):
             
+            
             scrapper.temp_dict[user]["url_actual"] = scrapper.driver.current_url
                     
-            scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
+            # scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Get a new code")]').click()
 
             # scrapper.temp_dict[user]["email"] = scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "code we sent")]').text.split("to")[-1].strip()
 
@@ -711,18 +712,16 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
             scrapper.driver.get("https://facebook.com")
     
     scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
-    
     #-----------------obtener usuario para loguin---------------
     try:
-        scrapper.wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
+        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, "input")))
         # scrapper.temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_email")
         scrapper.temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, "input")[0]
 
     except:
         #A veces aparecerá una presentacion de unirse a facebook, le daré a que ya tengo una cuenta...
         scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "I already have an account")]').click()
-        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
-        scrapper.wait.until(ec.visibility_of_element_located((By.ID, "m_login_email")))
+        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, "input")))
         scrapper.temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, "input")[0]
 
     
@@ -731,12 +730,11 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
     if not scrapper.temp_dict[user].get("user"):
         handlers(bot, user, "Introduce a continuación tu <b>Correo</b> o <b>Número de Teléfono</b> (agregando el código de tu país por delante ej: +53, +01, +52, etc) con el que te autenticas en Facebook: ", "user", scrapper.temp_dict)
 
-
+    
     scrapper.temp_dict[user]["e"].send_keys(scrapper.temp_dict[user]["user"])
     
     
     #-----------------obtener password para loguin---------------
-    scrapper.wait.until(ec.visibility_of_element_located((By.ID, "m_login_password")))
     # scrapper.temp_dict[user]["e"] = driver.find_element(By.ID, "m_login_password")
     scrapper.temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, "input")[1]
     
@@ -750,8 +748,9 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
     
     scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-anchor-id="replay"]')))
 
-    scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-anchor-id="replay"]').click()
-    
+    # scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-anchor-id="replay"]').click()
+    scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Log in")]').click()
+
     try:
         scrapper.wait.until(ec.url_changes(scrapper.temp_dict[user]["url_actual"]))
         scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'body')))
@@ -774,6 +773,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         pass
 
     print("Tendrá doble auth?")
+
     if scrapper.driver.current_url.endswith("#"):
         print("Si, si tiene")
         doble_auth(scrapper, user, bot)
@@ -792,11 +792,12 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
     
     try:
         
-        print("Pues no, no tiene")
+        
         print("Voy a esperar a que salga la main page de facebook")
         # if scrapper.wait.until(ec.all_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[role=button][data-mcomponent="MContainer"][data-action-id="32746"]') and not "save-device" in driver.current_url)):
         if scrapper.wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')) >= 3 and not "save-device" in driver.current_url)):
-            
+
+
             guardar_cookies(scrapper, user, loguin={"user": scrapper.temp_dict[user]["user"], "password": scrapper.temp_dict[user]["password"]})
 
             print("He guardado las cookies")

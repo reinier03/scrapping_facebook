@@ -57,7 +57,7 @@ bot.send_message(os.environ["admin"], "El bot de publicaciones de Facebook está
 
 
 @bot.middleware_handler()
-def cmd_middleware(update: telebot.types.Update, bot: telebot.TeleBot):
+def cmd_middleware(bot: telebot.TeleBot, update: telebot.types.Update):
     scrapper.temp_dict[update.message.from_user.id] = {}
     return
 
@@ -238,7 +238,7 @@ def get_work(m: telebot.types.Message):
         
         cola["uso"] = False      
         
-        if not scrapper.temp_dict[m.from_user.id]["cancel"]:
+        if not scrapper.temp_dict[m.from_user.id].get("cancel"):
             bot.send_message(m.chat.id, "Operación Terminada")
 
         print("He terminado con: " + str(m.from_user.id))
@@ -310,4 +310,4 @@ except:
 if not os.getenv("webhook_url"):
     bot.remove_webhook()
     time.sleep(2)
-    bot.infinity_polling()
+    bot.infinity_polling(timeout=80,)

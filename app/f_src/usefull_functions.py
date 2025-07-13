@@ -10,8 +10,10 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import Chrome
 
 
+
+
 def if_cancelar(scrapper, user, bot):
-    if scrapper.temp_dict[user]["cancel"]:
+    if scrapper.temp_dict[user].get("cancel"):
         bot.send_message(user, "Operación cancelada :(")
         give_error(bot, scrapper.driver, user, "no", False)
 
@@ -173,9 +175,10 @@ def make_captcha_screenshoot(captcha_element, user):
     return os.path.join(user_folder(user), str(user) + "_captcha.png")
 
 
-def handlers(bot, user , msg ,info, temp_dict , **kwargs):    
-    
-    
+def handlers(bot, user , msg ,info, diccionario: dict , **kwargs):    
+
+    temp_dict = diccionario.copy()
+
     if kwargs.get("file"):
         if kwargs.get("markup"):
             temp_dict[user]["msg"] = bot.send_photo(user, kwargs.get("file"), caption=msg, reply_markup=kwargs.get("markup"))
@@ -190,18 +193,18 @@ def handlers(bot, user , msg ,info, temp_dict , **kwargs):
         else:
             temp_dict[user]["msg"] = bot.send_message(user, msg)
     
-    
-    temp_dict[user]["completed"] = False  
+
+    temp_dict[user]["completed"] = False   
 
     match info:
         
         case "user":
         
-            bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.get_user, bot,user, info, temp_dict)
+            bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.get_user, bot,user, info, temp_dict, diccionario=temp_dict)
             
         case "password":
             
-            bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.get_user, bot,user, info, temp_dict)
+            bot.register_next_step_handler(temp_dict[user]["msg"], bot_handlers.get_user, bot,user, info, temp_dict, diccionario=temp_dict)
             
         case "perfil_elegir":
             
@@ -248,6 +251,6 @@ def handlers(bot, user , msg ,info, temp_dict , **kwargs):
     
 
     
-    temp_dict[user]["completed"] = False  
+    diccionario[user].update(temp_dict[user])
     
     return

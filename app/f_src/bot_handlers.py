@@ -1,9 +1,8 @@
 import telebot
 from telebot.types import ForceReply
 
-def get_user(m,bot,user, info,  temp_dict):
-        
-            
+def get_user(m , bot , user , info, temp_dict, **kwargs):
+
     temp_dict[user][info] = m.text
     temp_dict[user]["completed"] = True
             
