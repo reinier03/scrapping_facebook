@@ -29,7 +29,8 @@ webhook_url = Si esta variable es definida se usará el metodo webhook, sino pue
 
 cola = {}
 cola["uso"] = False
-admin = os.environ["admin"]
+cola["cola_usuarios"] = []
+admin = int(os.environ["admin"])
 
 if not "MONGO_URL" in os.environ:
     MONGO_URL = "mongodb://localhost:27017"
@@ -50,18 +51,20 @@ bot = telebot.TeleBot(os.environ["token"], "html")
 
 bot.set_my_commands([
     BotCommand("/start", "Información sobre el bot"),
-    BotCommand("/publicar", "Empieza a publicar en Facebook :)")
+    BotCommand("/publicar", "Empieza a publicar en Facebook :)"),
+    BotCommand("/cancel", "Cancela el proceso actual"),
+    BotCommand("/delete", "Cancela el proceso actual")
+
 ])
 
 bot.send_message(os.environ["admin"], "El bot de publicaciones de Facebook está listo :)")
 
 
-@bot.middleware_handler()
-def cmd_middleware(bot: telebot.TeleBot, update: telebot.types.Update):
-    scrapper.temp_dict[update.message.from_user.id] = {}
-    return
+# @bot.middleware_handler()
+# def cmd_middleware(bot: telebot.TeleBot, update: telebot.types.Update):
+#     return
 
-@bot.message_handler(func=lambda message: not message.chat.id == int(os.environ["admin"]))
+@bot.message_handler(func=lambda message: not message.chat.id == os.environ["admin"])
 def not_admin(m):
     bot.send_message(m.chat.id, "No disponible para el publico")
     return
@@ -101,6 +104,11 @@ def cmd_cancel(m):
     
 @bot.message_handler(commands=["delete"])
 def cmd_delete(m):
+
+    if not collection.find_one({"telegram_id": m.from_user.id}):
+        bot.send_message(m.chat.id, "Ni siquiera me has usado aún!\n\nNo tengo datos tuyos los cuales restablecer\nEnviame /info para comenzar a usarme :D")
+        return
+    
     scrapper.temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, "La opción actual borrará la información que tengo de tu cuenta y tendrías que volver a ingresar todo desde cero nuevamente...\n\nEstás seguro que deseas hacerlo?", reply_markup=ReplyKeyboardMarkup(True, True).add("Si", "No"))
     
 
@@ -109,7 +117,6 @@ def cmd_delete(m):
 
 def borrar_question(m):
     if m.text.lower() == "si": 
-        bot.send_message(m.chat.id, "Muy bien, borraré todo lo que sé de ti")
         
         for i in collection.find_one({"telegram_id": m.from_user.id})["cookies"]:
             scrapper.driver.delete_all_cookies()
@@ -124,10 +131,10 @@ def borrar_question(m):
             pass
         
 
-        bot.send_message(m.chat.id, "Ya se ha borrado todo exitosamente :-(")
+        bot.send_message(m.chat.id, "Ya se ha borrado todo exitosamente :-(", reply_markup=ReplyKeyboardRemove())
 
     else:
-        bot.send_message(m.chat.id, "Operación Cancelada con éxito :D")
+        bot.send_message(m.chat.id, "Operación Cancelada con éxito :D", reply_markup=ReplyKeyboardRemove())
 
     return
 
@@ -175,24 +182,76 @@ def cmd_publish(m):
 Ahora enviame el enlace de la publicación aquí y me ocuparé del resto ;)
 """)
     
+    return
     
-    
+def call_notificar(c):
+    global cola
+
+    cola["cola_usuarios"].remove(c.from_user.id)
+    bot.send_message(c.message.chat.id, "Muy bien, te dejaré de notificar")
+
+    return
+
+def notificar(m):
+    global cola
+    m.text = m.text.lower()
+    if not m.text in ["si", "no"]:
+        msg = bot.send_message(m.chat.id, "¡Toca uno de los botones disponibles!\n\n<b>¿Quieres que te notifique cuando esté disponible para que me uses?</b>", reply_markup=ReplyKeyboardMarkup(True, True).add("Si", "No"))  
+
+        bot.register_next_step_handler(msg, notificar)
+        return
+
+    if m.text == "si":
+        cola["cola_usuarios"].append(m.from_user.id)
+        bot.send_message(m.from_user.id, "Muy bien, <b>te notificaré</b> cuando esté desocupado")
+    else:
+        bot.send_message(m.from_user.id, "Muy bien, <b>NO te notificaré</b> entonces")
+
+    return
 
 @bot.message_handler(func=lambda x: True)
 def get_work(m: telebot.types.Message):
-    if m.text.lower().startswith("https://www.facebook.com"):            
-        
-        if cola["uso"]:
-            bot.send_message(m.chat.id, "Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado\n\n<b>Te notificaré cuando esté disponible</b>")           
-            
+    global cola
+    if scrapper.temp_dict.get(m.from_user.id):
+        pass
+    
+    elif cola.get("uso") and m.text.lower().startswith("https://www.facebook.com"):
 
+        if not m.from_user.id in cola["cola_usuarios"]:
+
+            msg = bot.send_message(m.chat.id, "Al parecer alguien ya me está usando :(\nLo siento pero por ahora estoy ocupado\n\n<b>¿Quieres que te notifique cuando dejen de usarme?</b>", reply_markup=ReplyKeyboardMarkup(True, True).add("Si", "No"))  
+
+            bot.register_next_step_handler(msg, notificar)
             return
 
+
+                 
+
+    
+    elif not cola.get("uso") and m.text.lower().startswith("https://www.facebook.com"):            
+        
         
         
         try:
             cola["uso"] = m.from_user.id
+            scrapper.temp_dict[m.from_user.id] = {}
             
+            if m.from_user.id in cola["cola_usuarios"]:
+                cola["cola_usuarios"].remove(m.from_user.id)
+
+            for i in cola["cola_usuarios"]:
+                try:
+                    bot.send_message(i, "Olvídalo :/\nYa me están usando nuevamente\n\n<b>Te volveré a avisar cuando esté desocupado</b>, pero debes de estar atento", reply_markup=InlineKeyboardMarkup(
+                        [
+                            [InlineKeyboardButton("No notificar más", callback_data="no_mas")]
+                        ]
+                    ))
+
+                    bot.register_callback_query_handler(call_notificar, lambda call: call.data == "no_mas")
+
+                except:
+                    pass
+
             try:
                 facebook_scrapper.main(scrapper, bot, m.from_user.id , m.text)
                 
@@ -242,7 +301,15 @@ def get_work(m: telebot.types.Message):
             bot.send_message(m.chat.id, "Operación Terminada")
 
         print("He terminado con: " + str(m.from_user.id))
+
+        for i in cola["cola_usuarios"]:
+            try:
+                bot.send_message(i, "Ya estoy disponible para Publicar :D\n\nÚsame antes de que alguien más me ocupe")
+            except:
+                pass
         scrapper.temp_dict[m.from_user.id] = {}
+
+    
 
     else:
         bot.send_message(m.chat.id, "Eso no es un enlace de Facebook\n\nPresiona /info para saber cómo usarme!")

@@ -306,8 +306,9 @@ def cargar_cookies(scrapper: s, user, bot=False , hacer_loguin=True):
             return ("ok", "login con cookies exitosamente", scrapper.temp_dict[user]["cookies_dict"])
     
         except Exception as er:
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
-            raise Exception("ID usuario: "+ str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
+            give_error(bot, scrapper.driver, user, "ID usuario: "+ str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
+            return
+
     
     else:
         print("Se cargaron cookies_2")
@@ -379,8 +380,9 @@ def captcha(scrapper: s, user, bot: telebot.TeleBot):
         return ("no", "Al parecer no hay captcha")
     
     except:
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
-        raise Exception("ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
+        give_error(bot, scrapper.driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
+
+
     
 def loguin(scrapper: s, user, bot, **kwargs):
 
@@ -401,8 +403,7 @@ def loguin(scrapper: s, user, bot, **kwargs):
         
         scrapper.temp_dict[user]["res"] = cargar_cookies(scrapper, user, bot)    
         if scrapper.temp_dict[user]["res"][0] == "error":
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
-            raise Exception(scrapper.temp_dict[user]["res"])
+            give_error(bot, scrapper.driver, user, scrapper.temp_dict[user]["res"])
         
 
         if not collection.find_one({"telegram_id": user}):
@@ -766,7 +767,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         if scrapper.driver.find_element(By.CSS_SELECTOR, 'div[class="wbloks_73"]'):
             
             bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Al parecer los datos que me has enviado son incorrectos\nTe he enviado una captura de lo que me muestra Facebook\n\nPor favor ingrese <b>correctamente</b> sus datos otra vez...")
-            del scrapper.temp_dict[user]
+            scrapper.temp_dict[user] = {}
             return loguin_cero(scrapper, user, bot)
             
     except:
@@ -826,8 +827,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         
         bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)) , "🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo")
 
-        del scrapper.temp_dict[user]["user"]
-        del scrapper.temp_dict[user]["password"]
+        scrapper.temp_dict[user] = {}
 
         return loguin_cero(scrapper, user, bot)
         
@@ -1347,15 +1347,16 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
         if scrapper.temp_dict[user]["res"][0] == "error":
             
             if "base de datos" in scrapper.temp_dict[user]["res"][1]:
-
-                bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)))
-                raise Exception(scrapper.temp_dict[user]["res"][1])
                 
-            raise Exception("Ha ocurrido un error en el loguin!\n\nDescripción:\n" + str(scrapper.temp_dict[user]["res"][1]))
+                give_error(bot, scrapper.driver, user, scrapper.temp_dict[user]["res"][1], False)
+                return
+
+            
+            give_error(bot, scrapper.driver, user, "Ha ocurrido un error en el loguin!\n\nDescripción:\n" + str(scrapper.temp_dict[user]["res"][1]))
         
     except:
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
-        raise Exception("error intentando hacer loguin\nID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
+        give_error(bot, scrapper.driver, user, "error intentando hacer loguin\nID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(format_exc()))
+        return
 
     print("Empezaré a comprobar si hay algún error luego del loguin")
 
@@ -1368,8 +1369,7 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
     except:
         scrapper.temp_dict[user]["e"] = None
 
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
-        raise Exception("ID usuario: " + str(user) + "\nFaltó algo :(")
+        give_error(bot, scrapper.driver, user, "ID usuario: " + str(user) + "\nFaltó algo :(",)
     
 
     print("A continuación miraré cual es la cuenta actual")    
@@ -1377,8 +1377,9 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
         scrapper.temp_dict[user]["res"] = elegir_cuenta(scrapper , user, bot, ver_actual=True)
         if scrapper.temp_dict[user]["res"][0] == "error":
 
-            bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "ID usuario: " + str(user) + "\n\nDescripción:\n" + str(scrapper.temp_dict[user]["res"][1]))
-            raise Exception("no")
+
+            give_error(bot, scrapper.driver, user, "ID usuario: " + str(user) + "\n\nDescripción:\n" + str(scrapper.temp_dict[user]["res"][1]))
+            return
         
         if not len(scrapper.temp_dict[user]["res"]) == 3:
         
@@ -1393,8 +1394,9 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
                 scrapper.temp_dict[user]["res"] = elegir_cuenta(scrapper, user, bot)
                 if scrapper.temp_dict[user]["res"][0] == "error":
 
-                    bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
-                    raise Exception("ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(scrapper.temp_dict[user]["res"][1]))
+
+                    give_error(bot, scrapper.driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\n" + str(scrapper.temp_dict[user]["res"][1]))
+
                 else:
                     # scrapper.temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nHe cambiado al perfil de: {scrapper.temp_dict[user]["res"][1]}", chat_id=user, message_id=scrapper.temp_dict[user]["info"].message_id, reply_markup=telebot.types.ReplyKeyboardRemove())
                     
@@ -1408,8 +1410,8 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
             bot.send_message(user, "Al parecer, solamente está el perfil de: " + str(scrapper.temp_dict[user]["res"][1]) +"\n\nContinuaré con ese...")
         
     except:
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
-        raise Exception("Ha ocurrido un error intentando ver la cuenta actual! ID usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
+        give_error(bot, scrapper.driver, user, "Ha ocurrido un error intentando ver la cuenta actual! ID usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
+        return
     
         
 
@@ -1430,9 +1432,8 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
             bot.send_message(user, scrapper.temp_dict[user]["res"][1])
 
     except:
-
-        bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Captura del error")
-        raise Exception("Ha ocurrido un error intentando ver la cuenta actual! ID usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
+        give_error(bot, scrapper.driver, user, "Ha ocurrido un error intentando ver la cuenta actual! ID usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
+        return
 
 
 
