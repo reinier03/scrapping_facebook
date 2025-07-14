@@ -64,13 +64,15 @@ bot.send_message(os.environ["admin"], "El bot de publicaciones de Facebook está
 # def cmd_middleware(bot: telebot.TeleBot, update: telebot.types.Update):
 #     return
 
-@bot.message_handler(func=lambda message: not message.chat.id == os.environ["admin"])
-def not_admin(m):
-    bot.send_message(m.chat.id, "No disponible para el publico")
-    return
+
 
 @bot.message_handler(func=lambda message: not message.chat.type == "private")
 def not_private(m):
+    return
+
+@bot.message_handler(func=lambda message: not message.chat.id == admin)
+def not_admin(m : telebot.types.Message):
+    bot.send_message(m.chat.id, "Este bot no está disponible para el público.\n\nCualquier queja o sugerencia hablar con @mistakedelalaif")
     return
 
 @bot.message_handler(commands=["start"])
