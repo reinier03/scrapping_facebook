@@ -8,6 +8,7 @@ from traceback import format_exc
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import Chrome
+from tempfile import gettempdir
 
 
 
@@ -143,15 +144,17 @@ def main_folder():
 
 def user_folder(user):
     user = str(user)
+    carpeta_destino = gettempdir()
+    # carpeta_destino = main_folder()
     
-    if not "user_archive" in os.listdir(main_folder()):
-        os.mkdir(os.path.join(main_folder(), "user_archive"))
-        os.mkdir(os.path.join(main_folder(), "user_archive", user))
+    if not "user_archive" in os.listdir(carpeta_destino):
+        os.mkdir(os.path.join(carpeta_destino, "user_archive"))
+        os.mkdir(os.path.join(carpeta_destino, "user_archive", user))
         
-    if not list(filter(lambda file: file.startswith(user), os.listdir(os.path.join(main_folder(), "user_archive")))):
-        os.mkdir(os.path.join(main_folder(), "user_archive",  user))
+    if not list(filter(lambda file: file.startswith(user), os.listdir(os.path.join(carpeta_destino, "user_archive")))):
+        os.mkdir(os.path.join(carpeta_destino, "user_archive",  user))
         
-    return os.path.join(main_folder(), "user_archive",  user)
+    return os.path.join(carpeta_destino, "user_archive",  user)
     
 def make_screenshoot(driver, user, element=False, bot=False):
     user = str(user)

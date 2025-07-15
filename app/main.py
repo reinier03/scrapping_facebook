@@ -110,10 +110,10 @@ def cmd_delete(m):
         bot.send_message(m.chat.id, "Ni siquiera me has usado aún!\n\nNo tengo datos tuyos los cuales restablecer\nEnviame /info para comenzar a usarme :D")
         return
     
-    scrapper.temp_dict[m.from_user.id]["msg"] = bot.send_message(m.chat.id, "La opción actual borrará la información que tengo de tu cuenta y tendrías que volver a ingresar todo desde cero nuevamente...\n\nEstás seguro que deseas hacerlo?", reply_markup=ReplyKeyboardMarkup(True, True).add("Si", "No"))
+    msg = bot.send_message(m.chat.id, "La opción actual borrará la información que tengo de tu cuenta y tendrías que volver a ingresar todo desde cero nuevamente...\n\nEstás seguro que deseas hacerlo?", reply_markup=ReplyKeyboardMarkup(True, True).add("Si", "No"))
     
 
-    bot.register_next_step_handler(scrapper.temp_dict[m.from_user.id]["msg"], borrar_question)
+    bot.register_next_step_handler(msg, borrar_question)
 
 
 def borrar_question(m):
