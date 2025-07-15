@@ -915,15 +915,17 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
                 try:
                     print("buscando el elemento de compartir...")
                     scrapper.temp_dict[user]["a"].scroll_by_amount(0, scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').rect["height"] * 4).perform()
-                
+
+
                 #hay veces que la página se corrompe y no existe dicha publicación, con esto lo controlo iniciando un valor para cargar nuevamente la página
                 except:
                     print("La página está corrupta, buscaré el elemento 'feed'")
-                    scrapper.wait_s.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "feed")]')))
+                    scrapper.wait_s.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Feed")]')))
                     
 
-                    info_message('La página está corrupta... Cuidado... \n\nEstás publicando demasiado?', bot, scrapper.temp_dict, user)
-                    scrapper.temp_dict[user]["cargar"] = True
+                    # info_message('La página está corrupta... Cuidado... \n\nEstás publicando demasiado?', bot, scrapper.temp_dict, user)
+                    
+                    scrapper.temp_dict[user]["cargar_limite"] = 0
 
                     # El número de intentos límite es de 3
                     if scrapper.temp_dict[user].get("cargar_limite"):
@@ -945,15 +947,25 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
 
                 try:
 
+                    if not scrapper.temp_dict[user].get("compartir_count"):
+                        scrapper.temp_dict[user]["compartir_count"] = scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').text
+
+                        scrapper.temp_dict[user]["compartir_count"] = int(re.search(r"\d+", scrapper.temp_dict[user]["compartir_count"]).group().strip())
+
+                    else:
+                        if int(re.search(r"\d+", scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').text).group().strip()) <= scrapper.temp_dict[user]["compartir_count"]:
+                            give_error(bot, scrapper.driver, user, "Al parecer, ya no se está publicando en los grupos...\n\nHe cancelado la operación...")
+
+
                     scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
-                    scrapper.temp_dict[user]["contador"] = 0
+                    del scrapper.temp_dict[user]["contador"]
                     break
 
                 except Exception as err:
                     scrapper.temp_dict[user]["contador"] += 1
 
                     if scrapper.temp_dict[user]["contador"] >= 4:
-                        raise err
+                        give_error(bot, scrapper.driver, user, "No he podido localizar el elemento de compartir :(")
 
                     scrapper.driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
 
@@ -1006,6 +1018,8 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
         print("Obteniendo grupos")
         scrapper.wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
 
+        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')))
+        
         scrapper.temp_dict[user]["lista_grupos"] = scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
              
         
@@ -1015,11 +1029,9 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
         
         #si ya recorrimos todos los elementos de la lista...
         while len(scrapper.temp_dict[user]["lista_grupos"]) < contador + 1:
-
             #apuntando el cursor encima de los grupos
             scrapper.temp_dict[user]["a"].move_to_element(scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
             
-            #por alguna razón, cuando lo pruebo en el debugger esta linea me da error con la variable 'scrapper.temp_dict[user]["lista_grupos"]' que almacena los grupos asi que lo pongo en un try-except
             
             hacer_scroll(scrapper.driver, user, scrapper.temp_dict, scrapper.temp_dict[user]["lista_grupos"], scrapper.temp_dict[user]["lista_grupos"][-1], (contador + 1) // 9)
 
@@ -1037,11 +1049,6 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
             
 
             if len(scrapper.temp_dict[user]["lista_grupos"]) == len(scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')):
-                
-                try:
-                    bot.unpin_chat_message(scrapper.temp_dict[user]["info"].chat.id, scrapper.temp_dict[user]["info"].message_id)
-                except:
-                    pass
                 
                 return ("ok", "Se ha publicado exitosamente en " + str(len(scrapper.temp_dict[user]["publicacion"]["publicados"])) + " grupo(s)")
             

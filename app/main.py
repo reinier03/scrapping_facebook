@@ -51,7 +51,6 @@ bot = telebot.TeleBot(os.environ["token"], "html")
 
 bot.set_my_commands([
     BotCommand("/start", "Información sobre el bot"),
-    BotCommand("/publicar", "Empieza a publicar en Facebook :)"),
     BotCommand("/cancel", "Cancela el proceso actual"),
     BotCommand("/delete", "Cancela el proceso actual")
 
@@ -259,15 +258,17 @@ def get_work(m: telebot.types.Message):
                 
             except Exception as e:
                 print("Ha ocurrido un error! Revisa el bot, te dará más detalles")
+                scrapper.temp_dict[m.from_user.id]["res"] = format_exc()
+
                 if isinstance(e.args, tuple):
                     if "no" == str(e.args[0]).lower():
                         pass
                     
                     else:
-                        bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(format_exc()) + "</blockquote>")
+                        bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(scrapper.temp_dict[m.from_user.id]["res"]) + "</blockquote>")
 
                 else:
-                    bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(format_exc()) + "</blockquote>")
+                    bot.send_message(m.from_user.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + str(scrapper.temp_dict[m.from_user.id]["res"]) + "</blockquote>")
             
             
                 
@@ -276,12 +277,12 @@ def get_work(m: telebot.types.Message):
                 
         except:
             try:
-                bot.send_message(m.chat.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + format_exc() + "</blockquote>")
+                bot.send_message(m.chat.id, "Ha ocurrido un error inesperado! Reenviale a @mistakedelalaif este mensaje\n\n<blockquote expandable>" + scrapper.temp_dict[m.from_user.id]["res"] + "</blockquote>")
                 
             except:
                 try:
                     with open(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"), "w") as file:
-                        file.write(f"Ha ocurrido un error inesperado!\nID del usuario: {m.from_user.id}\n\n{format_exc()}")
+                        file.write(f"Ha ocurrido un error inesperado!\nID del usuario: {m.from_user.id}\n\n{scrapper.temp_dict[m.from_user.id]["res"]}")
                         
                     with open(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"), "r") as file:
                         bot.send_document(m.from_user.id, telebot.types.InputFile(file, file_name="error_" + str(m.from_user.id) + ".txt"))
@@ -303,6 +304,11 @@ def get_work(m: telebot.types.Message):
             bot.send_message(m.chat.id, "Operación Terminada")
 
         print("He terminado con: " + str(m.from_user.id))
+
+        try:
+            bot.unpin_chat_message(scrapper.temp_dict[m.from_user.id]["info"].chat.id, scrapper.temp_dict[m.from_user.id]["info"].message_id)
+        except:
+            pass
 
         for i in cola["cola_usuarios"]:
             try:
