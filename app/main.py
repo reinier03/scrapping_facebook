@@ -440,7 +440,7 @@ def get_work_foto(m: telebot.types.Message):
         except:
             try:
                 with open(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"), "w") as file:
-                    file.write(f"Ha ocurrido un error inesperado!\nID del usuario: {m.from_user.id}\n\n{scrapper.temp_dict[m.from_user.id]["res"]}")
+                    file.write("Ha ocurrido un error inesperado!\nID del usuario: {}\n\n{}".format(m.from_user.id, scrapper.temp_dict[m.from_user.id]["res"]))
                     
                 with open(os.path.join(user_folder(m.from_user.id), "error_" + str(m.from_user.id) + ".txt"), "r") as file:
                     bot.send_document(m.from_user.id, telebot.types.InputFile(file, file_name="error_" + str(m.from_user.id) + ".txt"))
@@ -478,7 +478,7 @@ def webhook():
             update = telebot.types.Update.de_json(json_string)
             try:
                 if "host" in update.message.text and update.message.chat.id in [admin, 1413725506]:
-                    bot.send_message(update.message.chat.id, f"El url del host es: <code>{request.url}</code>")
+                    bot.send_message(update.message.chat.id, "El url del host es: <code>{}</code>".format(request.url))
                     
                     #en los host gratuitos, cuando pasa un tiempo de inactividad el servicio muere, entonces hago este GET a la url para que no muera  
                     if not list(filter(lambda i: i.name == "hilo_requests", threading.enumerate())):
@@ -496,9 +496,9 @@ def webhook():
             
             bot.process_new_updates([update])       
     else:
-        return f"<a href='https://t.me/{bot.user.username}'>Contáctame</a>"
+        return "<a href='https://t.me/{}'>Contáctame</a>".format(bot.user.username)
         
-    return f"<a href='https://t.me/{bot.user.username}'>Contáctame</a>"
+    return "<a href='https://t.me/{}'>Contáctame</a>".format(bot.user.username)
 
 @app.route("/healthz")
 def check():
@@ -515,7 +515,7 @@ def flask():
 
 
 try:
-    print(f"La dirección del servidor es:{request.host_url}")
+    print("La dirección del servidor es:{}".format(request.host_url))
     
 except:
     hilo_flask=threading.Thread(name="hilo_flask", target=flask)
