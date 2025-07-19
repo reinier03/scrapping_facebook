@@ -33,7 +33,6 @@ def anadir_opciones(o, container=False, mobile=False):
     # o.add_argument("--enable-javascript")                
     # o.add_argument("--disable-infobars")
     
-    
         
     if container:
         o.add_argument("--headless=new")
@@ -118,7 +117,7 @@ def uc_driver(mobile=False):
     o = uc.ChromeOptions()
     
     #desactivar el guardado de credenciales
-    o.add_argument("--password-store=basic")
+    # o.add_argument("--password-store=basic")
     #estas opciones son copiadas de arriba
     
     
@@ -144,7 +143,7 @@ def uc_driver(mobile=False):
         )
 
     else:
-        o = anadir_opciones(o, mobile=mobile)
+        o = anadir_opciones(o, container=True , mobile=mobile)
         driver = uc.Chrome(
             options=o,
             log_level=3,
@@ -152,13 +151,13 @@ def uc_driver(mobile=False):
             
             driver_executable_path=r'C:\Users\Reima\AppData\Local\Programs\Python\Python312\Lib\site-packages\seleniumbase\drivers\chromedriver.exe'
         )
-    
+
     
     if mobile:
         driver.set_window_rect(height=851, width=450)
         driver.set_window_position(x=0, y=0)
 
-
+    
     return driver
 
 

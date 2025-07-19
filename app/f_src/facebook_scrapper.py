@@ -23,6 +23,7 @@ import seleniumbase
 from pymongo import MongoClient
 import tempfile
 import shutil
+import pyautogui
 
 
 #variables de entorno
@@ -48,19 +49,26 @@ collection = db["usuarios"]
 
 
     
-def esperar(scrapper: s, etiqueta, elementos, intentos=6):
+def esperar(scrapper: s, etiqueta, elementos, selector="css", intentos=2):
     '''
     Esta funcion se asegura de que los elementos están disponibles en el DOM
     si no se cumplen las condiciones, se espera 5 segundos y se vuelve a intentar
     '''
     contador = 1
+    
+
     while True:
         try:
-            e = scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, etiqueta)) >= elementos + 1))
-            
+            match selector.lower():
+                case "css":
+                    e = scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, etiqueta)) >= elementos + 1))
+
+                case "xpath":
+                    e = scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.XPATH, etiqueta)) >= elementos + 1))
+
         except IndexError:
             if contador >= intentos:
-                return ("error", "Ingresaste un índice no válido")
+                raise Exception("Ingresaste un índice no válido")
             pass
         
         except:
@@ -75,7 +83,7 @@ def esperar(scrapper: s, etiqueta, elementos, intentos=6):
                 pass
             
             if contador >= intentos:
-                return ("error", "no se han obtenido la etiqueta: " + str(etiqueta))
+                raise Exception("no se han obtenido la etiqueta: " + str(etiqueta))
 
             else:
                 contador += 1
@@ -508,7 +516,7 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
 
     print("Estoy usando el loguin desde cero")
     
-    scrapper.temp_dict[user] = {}
+
     
     def doble_auth(scrapper: s , user, bot: telebot.TeleBot):
 
@@ -788,79 +796,77 @@ def loguin_cero(scrapper: s, user, bot : telebot.TeleBot, load_url=True, **kwarg
         if scrapper.driver.find_element(By.CSS_SELECTOR, 'div[class="wbloks_73"]'):
             
             bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)), "Al parecer los datos que me has enviado son incorrectos\nTe he enviado una captura de lo que me muestra Facebook\n\nPor favor ingrese <b>correctamente</b> sus datos otra vez...")
-            scrapper.temp_dict[user] = {}
+            del scrapper.temp_dict[user]["password"]
+            del scrapper.temp_dict[user]["user"]
             return loguin_cero(scrapper, user, bot)
             
     except:
         pass
 
-    print("Tendrá doble auth?")
+    
 
     if scrapper.driver.current_url.endswith("#"):
-        print("Si, si tiene")
+        print("Apareció una doble autenticación")
         doble_auth(scrapper, user, bot)
-        # if "No se ha podido dar click en el botón de doble autenticación" in scrapper.temp_dict[user]["res"][-1]:
-                        
-        #     temp_dict[user]["res"] = captcha(scrapper, user, bot)
-        #     if temp_dict[user]["res"][0] == "error":
-        #         raise Exception(temp_dict[user]["res"][1])
+        # if "No se ha podido dar click en el botón de doble autenticación" in scrapper.temp_di
             
+            
+    scrapper.wait.until(ec.all_of(lambda driver: driver.find_elements(By.CSS_SELECTOR, 'body')))
 
-                
-        # else:
-        #     pass
-            
-            
-    
     try:
+        scrapper.temp_dict[user]["res"] = scrapper.wait_s.until(ec.any_of(lambda driver: "save-device" in driver.current_url))
+    except:
+        scrapper.temp_dict[user]["res"] = None
+
+    if scrapper.temp_dict[user]["res"]:
+
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
+
+        scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
+
+
+            
         
         
-        print("Voy a esperar a que salga la main page de facebook")
-        # if scrapper.wait.until(ec.all_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[role=button][data-mcomponent="MContainer"][data-action-id="32746"]') and not "save-device" in driver.current_url)):
+
+    # scrapper.temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo", chat_id=user, message_id=scrapper.temp_dict[user]["info"].message_id) 
+
+    print("Voy a esperar a que salga la main page de facebook")
+
+
+    try:
         if scrapper.wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')) >= 3 and not "save-device" in driver.current_url)):
 
-
-            guardar_cookies(scrapper, user, loguin={"user": scrapper.temp_dict[user]["user"], "password": scrapper.temp_dict[user]["password"]})
-
-            print("He guardado las cookies")
-            
-            return ("ok", "loguin desde cero satisfactorio :)")
-        
-        
-    except Exception as e:
-        # scrapper.temp_dict[user]["info"] = bot.edit_message_text(text=f"🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo", chat_id=user, message_id=scrapper.temp_dict[user]["info"].message_id) 
-
-        if "save-device" in scrapper.driver.current_url:
-
-            scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]')))
-
-            scrapper.drive.find_element(By.CSS_SELECTOR, 'div[data-bloks-name="bk.components.Flexbox"][role="button"]').click()
-
-            scrapper.wait.until(ec.all_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[data-tti-phase="-1"][role="button"][tabindex="0"][data-focusable="true"][data-mcomponent="MContainer"][data-type="container"]')) >= 3 and not "save-device" in driver.current_url))
-
             guardar_cookies(scrapper, user, loguin={"user": scrapper.temp_dict[user]["user"], "password": scrapper.temp_dict[user]["password"]})
 
             print("He guardado las cookies")
             
             return ("ok", "loguin desde cero satisfactorio :)")
 
-
+        
+    except:
         
         bot.send_photo(user, telebot.types.InputFile(make_screenshoot(scrapper.driver, user)) , "🆕 Mensaje de Información\n\nNo has introducido tus datos correctamente, vuelve a intentarlo")
 
-        scrapper.temp_dict[user] = {}
+        del scrapper.temp_dict[user]["password"]
+        del scrapper.temp_dict[user]["user"]
 
         return loguin_cero(scrapper, user, bot)
         
-        
-def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, contador = 0, **kwargs):
 
+
+
+def publicacion(scrapper: s, bot:telebot.TeleBot, user, load_url=True, contador = 0, **kwargs):
+
+    
+    if "bookmarks" in scrapper.driver.current_url:
+        scrapper.driver.find_element(By.CSS_SELECTOR, 'div[role="button"]').click()
 
     if kwargs.get("diccionario"):
         scrapper.temp_dict = kwargs["diccionario"]
 
     else:
-        bot.send_message(user, "🆕 Mensaje de Información\n\nEstoy accediendo a la publicación del enlace que me proporcionaste..." )
+        bot.send_message(user, "🆕 Mensaje de Información\n\nA continuación, comenzaré a publicar en breve..." )
         
     
     # scrapper.temp_dict[user]["info"] = bot.edit_message_text(text="🆕 Mensaje de Información\n\nEstoy accediendo a la publicación del enlace que me proporcionaste...", chat_id=user, message_id=scrapper.temp_dict[user]["info"].message_id)    
@@ -869,28 +875,7 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
     
     
     scrapper.temp_dict[user]["a"] = ActionChains(scrapper.driver, duration=0)
-    
-    if load_url:
-        
-        if os.name == "nt":
-            try:
-                scrapper.driver.get(url)
-            except:
-                pass
-            
-            while True:
-                try:
-                    scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
-                    break
-                except:
-                    pass
-                
-        else:
-            scrapper.driver.get(url)
-                
-        
-        time.sleep(5)
-        print("Cargué el enlace proporcionado: {}".format(url))
+
 
     
     if not kwargs.get("temp_dic"):
@@ -898,151 +883,38 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
         
     else:
         scrapper.temp_dict[user]["publicacion"] = kwargs.get("info_publicacion")
+
+    load(scrapper, "https://m.facebook.com/groups/")
+
+
+    # esperar(scrapper, 'div[role="tab"]', 5)[1].click()
+    
+    #si ese elemento, no es el de grupos, se tiene que cargar la pagina, en ese caso concreto, el elemento padre de los grupos no sería el 10mo elemento de la etiqueta padre, sino el 15to
+    # if not "groups" in scrapper.driver.current_url:
+    #     load(scrapper, "https://m.facebook.com/groups/")
+
+    #     scrapper.temp_dict[user]["padre"] = 9
+        
+    # else:
+    #     scrapper.temp_dict[user]["padre"] = 14
     
     #bucle para publicar por los grupos
+    
     while True:
+
+        if contador != 0:
+            #el boton para ir atrás, a los grupos
+            scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role="button"]')))
+            scrapper.driver.find_element(By.CSS_SELECTOR, 'div[role="button"]').click()
+            
         if_cancelar(scrapper, user, bot)
+
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
+
+        scrapper.temp_dict[user]["lista_grupos"] = obtener_grupos(scrapper, user)
         
-            
-        # if contador != 0:
-        #     #aqui compruebo que la ventana de compartir ya no esté interrumpiendo
-        #     try:
-        #         scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))
-                
-        #     except:
-        #         raise Exception("Facebook me bloqueó?")
-            
+        print("Hay {} grupos".format(len(scrapper.temp_dict[user]["lista_grupos"]) - 1))
         
-        # scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div#screen-root')))
-
-
-        #esperar el botón de compartir
-        print("Buscaré el boton de compartir")
-        try:
-            scrapper.temp_dict[user]["res"] = {1: scrapper.wait_s.until(ec.visibility_of_element_located((By.XPATH, '//div[contains(@aria-label, "share")]')))}
-
-        except:
-            scrapper.temp_dict[user]["res"] = {2: scrapper.wait_s.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[data-type="vscroller"]')))}
-
-            
-        #elemento de compartir existe
-        if scrapper.temp_dict[user]["res"].get(1):       
-        
-            scrapper.temp_dict[user]["contador"] = 0
-
-            while True:
-                scrapper.driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
-
-                
-                try:
-                    print("buscando el elemento de compartir...")
-                    scrapper.temp_dict[user]["a"].scroll_by_amount(0, scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').location["y"] - scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').rect["height"] * 4).perform()
-
-
-                #hay veces que la página se corrompe y no existe dicha publicación, con esto lo controlo iniciando un valor para cargar nuevamente la página
-                except:
-                    print("La página está corrupta, buscaré el elemento 'feed'")
-                    scrapper.wait_s.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Feed")]')))
-                    
-                    
-                    scrapper.temp_dict[user]["cargar_limite"] = 0
-
-                    # El número de intentos límite es de 3
-                    if scrapper.temp_dict[user].get("cargar_limite"):
-                        if scrapper.temp_dict[user].get("cargar_limite") >= 3:
-                            
-                            raise Exception("Parece que la página de la publicación a compartir se ha corrompido")
-                    
-                        else: 
-                            scrapper.temp_dict[user]["cargar_limite"] += 1
-                    
-
-                    else:
-                        scrapper.temp_dict[user]["cargar_limite"] = 1
-                    
-                    
-                    return publicacion(scrapper, bot, url, user, contador = contador, kwargs=kwargs, diccionario=scrapper.temp_dict)
-
-                time.sleep(4)
-
-                try:
-
-                    if not scrapper.temp_dict[user].get("compartir_count"):
-                        scrapper.temp_dict[user]["compartir_count"] = scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').text
-
-                        scrapper.temp_dict[user]["compartir_count"] = int(re.search(r"\d+", scrapper.temp_dict[user]["compartir_count"]).group().strip())
-
-                    else:
-                        if int(re.search(r"\d+", scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').text).group().strip()) <= scrapper.temp_dict[user]["compartir_count"]:
-                            print("No se está publicando...ERROR")
-                            give_error(bot, scrapper.driver, user, "Al parecer, ya no se está publicando en los grupos...\n\nHe cancelado la operación...")
-
-
-                    scrapper.driver.find_element(By.XPATH, '//div[contains(@aria-label, "share")]').click()
-                    del scrapper.temp_dict[user]["contador"]
-                    break
-
-                except Exception as err:
-                    scrapper.temp_dict[user]["contador"] += 1
-
-                    if scrapper.temp_dict[user]["contador"] >= 4:
-                        give_error(bot, scrapper.driver, user, "No he podido localizar el elemento de compartir :(")
-
-                    scrapper.driver.find_element(By.CSS_SELECTOR, 'body').send_keys(Keys.HOME)
-
-
-
-
-            #click en el boton de compartir en la publicacion
-            print("Le he dado click en el botón Compartir")
-            
-
-            
-            try:
-
-
-                #elemento de los grupos
-                scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')))
-
-                # scrapper.wait.until(ec.all_of(
-                #     lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')) >= 5, 
-
-                #     lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 6))
-                
-
-            except:
-                pass
-
-            try:
-                scrapper.temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[4].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
-
-            except IndexError:
-                scrapper.temp_dict[user]["e"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="presentation"][class="m"]')[1].find_elements(By.CSS_SELECTOR, 'div[role="button"]')[5]
-
-            #click en compartir en grupos
-            time.sleep(8)
-            scrapper.temp_dict[user]["e"].click()
-
-            try:
-                WebDriverWait(scrapper.driver, 5).until(ec.invisibility_of_element_located(scrapper.temp_dict[user]["e"]))
-            except:
-                pass
-            
-            print("Click en Compartir Grupos")
-            
-            
-
-
-
-
-        #obtener grupos
-        print("Obteniendo grupos")
-        scrapper.wait.until(ec.any_of(lambda driver: driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')))
-
-        scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')))
-        
-        scrapper.temp_dict[user]["lista_grupos"] = scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
-             
         
         if not scrapper.temp_dict[user]["lista_grupos"]:
             
@@ -1050,8 +922,8 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
         
         #si ya recorrimos todos los elementos de la lista...
         while len(scrapper.temp_dict[user]["lista_grupos"]) < contador + 1:
-            #apuntando el cursor encima de los grupos
-            scrapper.temp_dict[user]["a"].move_to_element(scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
+            # #apuntando el cursor encima de los grupos
+            # scrapper.temp_dict[user]["a"].move_to_element(scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
             
             
             hacer_scroll(scrapper.driver, user, scrapper.temp_dict, scrapper.temp_dict[user]["lista_grupos"], scrapper.temp_dict[user]["lista_grupos"][-1], (contador + 1) // 9)
@@ -1061,7 +933,9 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
             scrapper.temp_dict[user]["a"].scroll_from_origin(ScrollOrigin.from_element(scrapper.temp_dict[user]["lista_grupos"][-1]), 0 , 50).perform()
             
             try:
-                scrapper.wait_s.until(ec.any_of(lambda driver: len(scrapper.temp_dict[user]["lista_grupos"]) < len(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]'))))
+                
+                scrapper.wait_s.until(ec.any_of(lambda driver: len(scrapper.temp_dict[user]["lista_grupos"]) < len(obtener_grupos(scrapper, user))))
+                
                 
             except:
                 pass
@@ -1069,26 +943,28 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
             #si ya se recorrieron todos los grupos y la lista de grupos guardada es igual a la que resulta de la búsqueda entonces se terminó exitosamente de publicar
             
 
-            if len(scrapper.temp_dict[user]["lista_grupos"]) == len(scrapper.driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')):
+            if len(scrapper.temp_dict[user]["lista_grupos"]) == len(obtener_grupos(scrapper, user)):
                 
                 return ("ok", "Se ha publicado exitosamente en " + str(len(scrapper.temp_dict[user]["publicacion"]["publicados"])) + " grupo(s)")
             
             # si la lista de grupos guardada es menor a la nueva resultante de la busqueda, entonces se actualiza los elementos de la lista de grupos y se continua
             else:
-                scrapper.temp_dict[user]["lista_grupos"] = scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')))
 
-                scrapper.temp_dict[user]["lista_grupos"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[data-type="vscroller"]').find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-type="container"][tabindex="0"][data-focusable="true"]')
-      
+                scrapper.temp_dict[user]["lista_grupos"] = obtener_grupos(scrapper, user)
         
         
+
+        #le quito 2 porque ese elemento es el de "create a group" y "Sort" que pone de primero facebook
+        for i in range(2):                
+            scrapper.temp_dict[user]["lista_grupos"].remove(scrapper.temp_dict[user]["lista_grupos"][0])
         
         # scrapper.temp_dict[user]["a"].move_to_element(driver.find_element(By.CSS_SELECTOR, 'div[data-type="vscroller"]')).perform()
 
-
-        hacer_scroll(scrapper.driver, user, scrapper.temp_dict, scrapper.temp_dict[user]["lista_grupos"], scrapper.temp_dict[user]["lista_grupos"][contador], (contador + 1) // 9)
         
-
-        scrapper.temp_dict[user]["publicacion"]["nombre"] = scrapper.temp_dict[user]["lista_grupos"][contador].text
+        hacer_scroll(scrapper.driver, user, scrapper.temp_dict, scrapper.temp_dict[user]["lista_grupos"], scrapper.temp_dict[user]["lista_grupos"][contador], (contador + 1) // 4)
+        
+        
+        
         # time.sleep(2)
 
 
@@ -1099,11 +975,40 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
             scrapper.temp_dict[user]["lista_grupos"][contador].click()
         except:
             print("Error intentando clickear en el grupo? Lo volveré a intentar")
+            scrapper.temp_dict[user]["lista_grupos"] = obtener_grupos(scrapper, user)
             scrapper.temp_dict[user]["a"].scroll_to_element(scrapper.temp_dict[user]["lista_grupos"][contador]).perform()
-            scrapper.temp_dict[user]["a"].scroll_from_origin(ScrollOrigin.from_element(scrapper.temp_dict[user]["lista_grupos"][contador]), 0 , -200).perform()
+            scrapper.temp_dict[user]["a"].scroll_from_origin(ScrollOrigin.from_element(scrapper.temp_dict[user]["lista_grupos"][contador]), 0 , - scrapper.temp_dict[user]["lista_grupos"][contador].size["height"] * 3).perform()
             scrapper.temp_dict[user]["lista_grupos"][contador].click()
 
         
+        #esperar a "Write something..."
+        scrapper.wait.until(ec.visibility_of_all_elements_located((By.XPATH, '//*[contains(text(), "Write something...")]')))
+        
+        scrapper.temp_dict[user]["publicacion"]["nombre"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'h1')[1].text.split(">")[0].strip().replace("\n", " ")
+
+        scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Write something...")]')))
+        scrapper.temp_dict[user]["a"].scroll_to_element( scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Write something...")]'))
+
+        
+
+
+        scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Write something...")]').find_element(By.XPATH, '..').find_element(By.XPATH, '..').find_element(By.XPATH, '..').click()
+
+        scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, 'div[role=button][data-mcomponent="ServerTextArea"]')))
+        
+        scrapper.temp_dict[user]["a"].send_keys_to_element(scrapper.driver.find_element(By.CSS_SELECTOR, 'div[role=button][data-mcomponent="ServerTextArea"]'), scrapper.temp_dict[user]["texto_p"]).perform()
+
+
+        envia_fotos_input(scrapper, user, scrapper.temp_dict[user]["foto_p"])
+
+        
+        scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "POST")]').find_element(By.XPATH, '..').find_element(By.XPATH, '..').find_element(By.XPATH, '..').click()
+
+        #esperar a regresar..
+        scrapper.wait.until(ec.visibility_of_all_elements_located((By.XPATH, '//*[contains(text(), "Write something...")]')))
+        
+
+
         def obtener_texto(error: bool):
             
             try:
@@ -1151,62 +1056,54 @@ def publicacion(scrapper: s, bot:telebot.TeleBot, url, user, load_url=True, cont
             
             scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, "Lista de Grupos en los que se ha Publicado:\n\n")
         
-        #si la ventana se mantiene...
-        scrapper.temp_dict[user]["publicacion"]["publicados"].append(scrapper.temp_dict[user]["publicacion"]["nombre"])
-        scrapper.temp_dict[user]["res"] = obtener_texto(False)
         
-        if scrapper.temp_dict[user]["res"][0] == "nuevo":
-            scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, scrapper.temp_dict[user]["res"][1])
 
-        else:
-
-            try:
-                scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.edit_message_text(scrapper.temp_dict[user]["res"][1] , user, scrapper.temp_dict[user]["publicacion"]["msg_publicacion"].message_id)
-
-            except:
-                scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, scrapper.temp_dict[user]["res"][1])
-            
-            
-            
-            
-        
-        
-        #esperar a que aparezca el elemento de 'Publicar' 
         try:
             
-            scrapper.wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, 'div[role="button"]')))
+            scrapper.temp_dict[user]["a"].scroll_to_element(scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Write something...")]'))
 
-            scrapper.wait.until(ec.any_of(lambda driver: len(driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')) >= 8))
+            scrapper.wait_s.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "{}")]'.format(str(scrapper.temp_dict[user]["perfil_actual"]).strip()))))
 
-            scrapper.temp_dict[user]["res"] = ("ok", scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[role="button"]')[7])
-            
-        except:
-            give_error(bot, scrapper.driver, user, "ID usuario: " + str(user) + "\n\nDescripción del error:\nNO se pudo localizar el boton para publicar en los grupos\n\nLog del error:\n" + format_exc())
-            return
-        
-
-
-        
-        try:
-            #click en publicar
-            time.sleep(8)
-            scrapper.temp_dict[user]["res"][1].click()
             print("Publiqué exitosamente en: " + str(scrapper.temp_dict[user]["publicacion"]["nombre"]))
 
-            #cambiar descomentar para pruebas, este es el boton para cerrar la ventana de publicacion
-            # driver.find_element(By.CSS_SELECTOR, 'div[class="xurb0ha"]').click()
-        
+            scrapper.temp_dict[user]["publicacion"]["publicados"].append(scrapper.temp_dict[user]["publicacion"]["nombre"])
+
+            scrapper.temp_dict[user]["res"] = obtener_texto(False)
+
+            if scrapper.temp_dict[user]["res"][0] == "nuevo":
+                scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, scrapper.temp_dict[user]["res"][1])
+
+            else:
+
+                try:
+                    scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.edit_message_text(scrapper.temp_dict[user]["res"][1] , user, scrapper.temp_dict[user]["publicacion"]["msg_publicacion"].message_id)
+
+                except:
+                    scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, scrapper.temp_dict[user]["res"][1])
+
         except:
-            give_error(bot, scrapper.driver, user, "¿Facebook me habrá bloqueado?")
-            return
-        
+
+            scrapper.temp_dict[user]["publicacion"]["error"].append(scrapper.temp_dict[user]["publicacion"]["nombre"])
+
+            scrapper.temp_dict[user]["res"] = obtener_texto(True)
+
+            if scrapper.temp_dict[user]["res"][0] == "nuevo":
+                scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, scrapper.temp_dict[user]["res"][1])
+
+            else:
+
+                try:
+                    scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.edit_message_text(scrapper.temp_dict[user]["res"][1] , user, scrapper.temp_dict[user]["publicacion"]["msg_publicacion"].message_id)
+
+                except:
+                    scrapper.temp_dict[user]["publicacion"]["msg_publicacion"] = bot.send_message(user, scrapper.temp_dict[user]["res"][1])
+
         
         
         
         contador += 1
 
-        if scrapper.temp_dict[user].get("cargar"):
-            return publicacion(scrapper, bot, url, user, contador = contador, kwargs=kwargs, diccionario=scrapper.temp_dict)
+        
             
                   
                 
@@ -1274,6 +1171,8 @@ def elegir_cuenta(scrapper: s, user, bot: telebot.TeleBot , ver_actual=False):
             #si tiene solamente 1 perfil en la cuenta no aparecerá el botón
             scrapper.temp_dict[user]["res"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[tabindex="0"][role="button"][data-focusable="true"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"][class="m"]')[2]
 
+            scrapper.temp_dict[user]["perfil_actual"] = scrapper.temp_dict[user]["res"].text.split("\n")[0].strip()
+
             return ("ok", scrapper.temp_dict[user]["res"].text.split("\n")[0].strip(), "uno")
 
 
@@ -1315,6 +1214,7 @@ def elegir_cuenta(scrapper: s, user, bot: telebot.TeleBot , ver_actual=False):
             scrapper.temp_dict[user]["cuentas"].remove(scrapper.temp_dict[user]["cuentas"][e])
     
     if len(scrapper.temp_dict[user]["cuentas"]) == 1:
+        scrapper.temp_dict[user]["perfil_actual"] = scrapper.temp_dict[user]["cuentas"][0].text.split("\n")[0]
         return ("ok", scrapper.temp_dict[user]["cuentas"][0].text.split("\n")[0], "uno")
 
     
@@ -1342,6 +1242,7 @@ def elegir_cuenta(scrapper: s, user, bot: telebot.TeleBot , ver_actual=False):
         scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "div#screen-root")))
         guardar_cookies(scrapper, user)
         
+        scrapper.temp_dict[user]["perfil_actual"] = scrapper.temp_dict[user]["perfiles"][scrapper.temp_dict[user]["res"]]
 
         return ("ok", scrapper.temp_dict[user]["perfiles"][scrapper.temp_dict[user]["res"]])
         
@@ -1361,15 +1262,13 @@ def elegir_cuenta(scrapper: s, user, bot: telebot.TeleBot , ver_actual=False):
     
         
         
-def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
+def main(scrapper: s, bot: telebot.TeleBot, user):
     """
     This function will do all the scrapping requesting to other functions and makes for sure that all is ok
     
     bot: instance of telebot
     user : telegram's user_id
     """
-
-    scrapper.temp_dict[user] = {}
     
     comprobar_BD(collection)
     
@@ -1442,6 +1341,7 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
                 bot.send_message(user, "🆕 Mensaje de Información\n\nMuy bien, continuaré con el perfil actual\n\nLoguin completado exitosamente!", reply_markup=telebot.types.ReplyKeyboardRemove())
         else:
             bot.send_message(user, "Al parecer, solamente está el perfil de: " + str(scrapper.temp_dict[user]["res"][1]) +"\n\nContinuaré con ese...")
+
         
     except:
         give_error(bot, scrapper.driver, user, "Ha ocurrido un error intentando ver la cuenta actual! ID usuario: " + str(user) + "\n\nMensaje de error:\n" + str(format_exc()))
@@ -1457,7 +1357,7 @@ def main(scrapper: s, bot: telebot.TeleBot, user, link_publicacion):
 
     
     try:
-        scrapper.temp_dict[user]["res"] = publicacion(scrapper, bot , link_publicacion, user)
+        scrapper.temp_dict[user]["res"] = publicacion(scrapper, bot , user)
         
         if scrapper.temp_dict[user]["res"][0] == "error":
             print(scrapper.temp_dict[user]["res"][1])

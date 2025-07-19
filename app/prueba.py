@@ -5,6 +5,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.common.action_chains import ActionChains
+import pyautogui
+import time
+
 
 
 d = uc_driver(True)
@@ -17,11 +20,16 @@ a = ActionChains(d, 0)
 
 
 
+
+
+
+
 with open(r"D:\Programacion\Proyectos personales\webscrapping\revolico_scrapping\user_archive\cookies.pkl", "rb") as file:
     c = dill.load(file)
     d.get("https://facebook.com/robots.txt")
-    for i in c:
+    for i in c["cookies"]:
         d.add_cookie(i)
+
 
 
 d.get("https://facebook.com")
@@ -30,3 +38,5 @@ driver = d
 
 
 breakpoint()
+
+

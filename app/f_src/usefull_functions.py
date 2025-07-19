@@ -8,10 +8,159 @@ from traceback import format_exc
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver import Chrome
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.common.by import By
 from tempfile import gettempdir
+import cv2
+import numpy
+import pyautogui
+
+
+def liberar_cola(scrapper, message, bot, cola):
+    cola["uso"] = False      
+
+    for i in cola["cola_usuarios"]:
+        try:
+            bot.send_message(i, "Ya estoy disponible para Publicar :D\n\nÚsame antes de que alguien más me ocupe")
+        except:
+            pass
+
+    scrapper.temp_dict[message.from_user.id] = {}
+    return
+
+def obtener_grupos(scrapper, user):
+
+    #forma antigua---
+    #scrapper.temp_dict[user]["lista_grupos"] = scrapper.driver.find_elements(By.CSS_SELECTOR, 'div[class="m bg-s2"][data-tti-phase="-1"][data-mcomponent="MContainer"][data-type="container"]')[scrapper.temp_dict[user]["padre"]].find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-focusable="true"][data-type="container"]')
+    try:
+        scrapper.temp_dict[user]["e"] = scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Create a group")]')))
+    
+    except:
+        load(scrapper, "https://m.facebook.com/groups/")
+        scrapper.temp_dict[user]["e"] = scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "Create a group")]')))
+
+    scrapper.temp_dict[user]["e"] = scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "Create a group")]')
+
+    for i in range(4):
+        scrapper.temp_dict[user]["e"] = scrapper.temp_dict[user]["e"].find_element(By.XPATH, '..')
+
+
+    return scrapper.temp_dict[user]["e"].find_elements(By.CSS_SELECTOR, 'div[data-mcomponent="MContainer"][data-focusable="true"][data-type="container"]')
+
+def if_cambio(scrapper, user):
+    
+    
+    for i in range(10):
+        scrapper.temp_dict[user]["captura"] = numpy.array(pyautogui.screenshot(os.path.join(str(user_folder(user)), "prueba.png")))
+
+        if numpy.sum(cv2.absdiff(scrapper.temp_dict["original"] , scrapper.temp_dict[user]["captura"])) > scrapper.temp_dict["original"].shape[1] * scrapper.temp_dict["original"].shape[0] * 3 * 255 * 0.15:
+            os.remove(os.path.join(str(user_folder(user)), "prueba.png"))
+            os.remove(os.path.join(str(user_folder(user)), "original.png"))
+            del scrapper.temp_dict[user]["captura"]
+            del scrapper.temp_dict["original"]
+            return True
+        
+        else:
+            time.sleep(5)
 
 
 
+    raise Exception("No se encontraron cambios en la GUI para que apareciera la ventana de la selección de fotos")
+
+
+def envia_fotos_gui(scrapper, user, photo_path):
+    scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(text(), "hotos")]')))
+
+    if os.path.isfile(os.path.join(str(user_folder(user)), "original.png")):
+        os.remove(os.path.join(str(user_folder(user)), "original.png"))
+
+    scrapper.temp_dict["original"] = numpy.array(pyautogui.screenshot(os.path.join(str(user_folder(user)), "original.png")))
+
+    
+    scrapper.driver.find_element(By.XPATH, '//*[contains(@aria-label, "hotos")]').click()
+
+    
+    
+    if if_cambio(scrapper, user) == True:
+        if os.name != "nt":
+            pyautogui.write(photo_path).replace("\\", "/")
+
+        else:
+            pyautogui.write(photo_path).replace("/", "\\")
+
+        pyautogui.press("tab")
+        pyautogui.press("tab")
+        pyautogui.press("enter")
+
+
+        time.sleep(2)
+
+def envia_fotos_input(scrapper, user, photo_path):
+    
+    scrapper.wait.until(ec.visibility_of_element_located((By.XPATH, '//*[contains(@aria-label, "hotos")]')))
+
+    try:
+        scrapper.driver.find_element(By.XPATH, '//*[contains(@aria-label, "hotos")]').click()
+    except:
+        scrapper.driver.find_element(By.XPATH, '//*[contains(text(), "hotos")]').click()
+
+    scrapper.driver.find_element(By.XPATH, '//input').send_keys(photo_path)
+    
+    return True
+    
+    # try:
+    #     scrapper.driver.execute_script('arguments[0].removeAttribute("data-client-focused-component")', scrapper.driver.find_element(By.XPATH, '//*[contains(@data-client-focused-component, "true")]'))
+    # except:
+    #     pass
+
+    # scrapper.driver.execute_script('arguments[0].setAttribute("accept", "image/jpeg"); arguments[0].setAttribute("multiple", "true")', scrapper.driver.find_element(By.XPATH, '//input'))
+
+
+    # scrapper.driver.execute_script('arguments[0].setAttribute("data-client-focused-component", "true")', scrapper.driver.find_element(By.XPATH, '//*[contains(@aria-label, "hotos")]'))
+
+
+    # scrapper.driver.execute_script('arguments[0].setAttribute("width", "50px")', scrapper.driver.find_element(By.XPATH, '//input'))
+
+    # scrapper.driver.execute_script('arguments[0].setAttribute("height", "50px")', scrapper.driver.find_element(By.XPATH, '//input'))
+    
+    # scrapper.driver.execute_script('arguments[0].setAttribute("display", "block")', scrapper.driver.find_element(By.XPATH, '//input'))
+
+    # scrapper.driver.execute_script('arguments[0].setAttribute("style", "display: block; width: 100px; height: 100px; text: Hola")', scrapper.driver.find_element(By.XPATH, '//input'))
+
+    # scrapper.driver.find_element(By.XPATH, '//input').text
+
+    # scrapper.driver.find_element(By.CSS_SELECTOR, 'h2').click()
+
+    # time.sleep(1)
+
+    # scrapper.temp_dict[user]["a"].send_keys_to_element(scrapper.driver.find_element(By.XPATH, '//input'), photo_path).perform()
+    # scrapper.driver.find_element(By.XPATH, '//input').send_keys(photo_path)
+    
+    
+
+def load(scrapper, url):
+
+        
+    if os.name == "nt":
+        try:
+            scrapper.driver.get(url)
+        except:
+            pass
+        
+        while True:
+            try:
+                scrapper.wait.until(ec.visibility_of_element_located((By.CSS_SELECTOR, "body")))
+                break
+            except:
+                pass
+            
+    else:
+        scrapper.driver.get(url)
+            
+    
+    
+    return 
+        
 
 def if_cancelar(scrapper, user, bot):
     if scrapper.temp_dict[user].get("cancel"):
